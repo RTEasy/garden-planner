@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { seedCatalog } from './data/seedCatalog';
 import { BED_POSITIONS } from './types';
+import { useAuth } from './context/AuthContext';
+import { AuthForm } from './components/auth/AuthForm';
 import './App.css';
 
 type Tab = 'dashboard' | 'beds' | 'inventory' | 'schedule';
@@ -8,6 +10,7 @@ type Tab = 'dashboard' | 'beds' | 'inventory' | 'schedule';
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [selectedBed, setSelectedBed] = useState<1 | 2 | 3>(1);
+  const { user, loading, signOut } = useAuth();
 
   const bedNames = {
     1: 'Vegetables & Herbs',
@@ -15,13 +18,38 @@ function App() {
     3: 'Cut Flowers & Herbs',
   };
 
+  // Show loading spinner while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-500">Loading...</div>
+      </div>
+    );
+  }
+
+  // Show auth form if not logged in
+  if (!user) {
+    return <AuthForm />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-green-700 text-white shadow-lg">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold">Garden Planner</h1>
-          <p className="text-green-200 text-sm">Square Foot Garden Management</p>
+        <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold">Garden Planner</h1>
+            <p className="text-green-200 text-sm">Square Foot Garden Management</p>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="text-green-200 text-sm hidden sm:block">{user.email}</span>
+            <button
+              onClick={signOut}
+              className="bg-green-600 hover:bg-green-500 px-3 py-1 rounded text-sm transition-colors"
+            >
+              Sign Out
+            </button>
+          </div>
         </div>
       </header>
 
@@ -92,11 +120,10 @@ function App() {
               </div>
             </div>
 
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <h3 className="font-semibold text-yellow-800">Setup Required</h3>
-              <p className="text-yellow-700 text-sm mt-1">
-                Connect to Supabase to enable cloud sync across devices.
-                Add your credentials to <code className="bg-yellow-100 px-1 rounded">.env.local</code>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <h3 className="font-semibold text-green-800">You're signed in!</h3>
+              <p className="text-green-700 text-sm mt-1">
+                Your data will sync across all your devices automatically.
               </p>
             </div>
           </div>

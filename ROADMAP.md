@@ -372,6 +372,14 @@ garden-planner/
   - Built basic App with dashboard, beds view, inventory list, and schedule placeholder
   - Project builds successfully!
 
+  Completed Phase 1.2 & 1.3:
+  - Created Supabase project with PostgreSQL database
+  - Set up 5 tables: seed_catalog, inventory, garden_locations, bed_squares, planting_tasks
+  - Configured Row Level Security policies for user data isolation
+  - Imported all 27 seed varieties to Supabase
+  - Pushed to GitHub: https://github.com/RTEasy/garden-planner
+  - Deployed to Vercel: https://garden-planner-three-delta.vercel.app
+
   **Project location**: `~/Library/CloudStorage/GoogleDrive-ryanthomaseasley@gmail.com/My Drive/gardening/garden-planner/`
 
 ---
@@ -380,9 +388,12 @@ garden-planner/
 
 1. ~~Initialize Vite + React + TypeScript project~~ DONE
 2. ~~Set up Tailwind CSS~~ DONE
-3. Initialize Git repo and push to GitHub
-4. Create Supabase project and configure database
-5. Connect to Vercel for deployment
+3. ~~Initialize Git repo and push to GitHub~~ DONE
+4. ~~Create Supabase project and configure database~~ DONE
+5. ~~Connect to Vercel for deployment~~ DONE
 6. Set up PWA for phone access
 7. ~~Create TypeScript type definitions~~ DONE
-8. ~~Import seed catalog data~~ DONE (local, need Supabase for cloud)
+8. ~~Import seed catalog data~~ DONE
+9. Add user authentication (sign up / login)
+10. Build inventory management (add seeds to your collection)
+11. Set up garden location with frost dates
