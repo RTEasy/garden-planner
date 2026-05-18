@@ -5,6 +5,8 @@ import { useAuth } from './context/AuthContext';
 import { AuthForm } from './components/auth/AuthForm';
 import { LocationSetup } from './components/location/LocationSetup';
 import { useGardenLocation } from './hooks/useGardenLocation';
+import { useInventory } from './hooks/useInventory';
+import { AddSeedModal } from './components/inventory/AddSeedModal';
 import './App.css';
 
 type Tab = 'dashboard' | 'beds' | 'inventory' | 'schedule' | 'settings';
@@ -12,8 +14,10 @@ type Tab = 'dashboard' | 'beds' | 'inventory' | 'schedule' | 'settings';
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [selectedBed, setSelectedBed] = useState<1 | 2 | 3>(1);
+  const [showAddSeedModal, setShowAddSeedModal] = useState(false);
   const { user, loading, signOut } = useAuth();
   const { location } = useGardenLocation();
+  const { inventory, loading: inventoryLoading, addToInventory, removeFromInventory } = useInventory();
 
   const bedNames = {
     1: 'Vegetables & Herbs',
@@ -93,8 +97,8 @@ function App() {
                   <div className="text-gray-600">Square Feet</div>
                 </div>
                 <div className="bg-amber-50 rounded-lg p-4">
-                  <div className="text-3xl font-bold text-amber-700">{seedCatalog.length}</div>
-                  <div className="text-gray-600">Seed Varieties</div>
+                  <div className="text-3xl font-bold text-amber-700">{inventory.length}</div>
+                  <div className="text-gray-600">Seeds in Inventory</div>
                 </div>
               </div>
             </div>
@@ -191,43 +195,109 @@ function App() {
         {activeTab === 'inventory' && (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold text-gray-800">Seed Inventory</h2>
-              <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+              <h2 className="text-xl font-semibold text-gray-800">My Seed Inventory</h2>
+              <button
+                onClick={() => setShowAddSeedModal(true)}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+              >
                 + Add Seeds
               </button>
             </div>
 
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="text-left px-4 py-3 text-gray-600 font-medium">Name</th>
-                    <th className="text-left px-4 py-3 text-gray-600 font-medium">Cultivar</th>
-                    <th className="text-left px-4 py-3 text-gray-600 font-medium">Type</th>
-                    <th className="text-left px-4 py-3 text-gray-600 font-medium">Spacing</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {seedCatalog.slice(0, 10).map((seed) => (
-                    <tr key={seed.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 font-medium text-gray-800 capitalize">{seed.commonName}</td>
-                      <td className="px-4 py-3 text-gray-600">{seed.cultivar}</td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          seed.plantType === 'vegetable' ? 'bg-green-100 text-green-700' :
-                          seed.plantType === 'herb' ? 'bg-purple-100 text-purple-700' :
-                          'bg-pink-100 text-pink-700'
-                        }`}>
-                          {seed.plantType}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-gray-600">{seed.spacing}</td>
+            {inventoryLoading ? (
+              <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
+                Loading inventory...
+              </div>
+            ) : inventory.length === 0 ? (
+              <div className="bg-white rounded-lg shadow p-8 text-center">
+                <p className="text-gray-600 mb-4">Your seed inventory is empty.</p>
+                <button
+                  onClick={() => setShowAddSeedModal(true)}
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  Add Your First Seeds
+                </button>
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg shadow overflow-hidden">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="text-left px-4 py-3 text-gray-600 font-medium">Name</th>
+                      <th className="text-left px-4 py-3 text-gray-600 font-medium">Cultivar</th>
+                      <th className="text-left px-4 py-3 text-gray-600 font-medium">Type</th>
+                      <th className="text-left px-4 py-3 text-gray-600 font-medium">Packets</th>
+                      <th className="text-left px-4 py-3 text-gray-600 font-medium">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-              <div className="px-4 py-3 bg-gray-50 text-gray-500 text-sm">
-                Showing 10 of {seedCatalog.length} seed varieties
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {inventory.map((item) => (
+                      <tr key={item.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 font-medium text-gray-800 capitalize">{item.seed.commonName}</td>
+                        <td className="px-4 py-3 text-gray-600">{item.seed.cultivar}</td>
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            item.seed.plantType === 'vegetable' ? 'bg-green-100 text-green-700' :
+                            item.seed.plantType === 'herb' ? 'bg-purple-100 text-purple-700' :
+                            'bg-pink-100 text-pink-700'
+                          }`}>
+                            {item.seed.plantType}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-gray-600">{item.packetCount}</td>
+                        <td className="px-4 py-3">
+                          <button
+                            onClick={() => removeFromInventory(item.id)}
+                            className="text-red-600 hover:text-red-700 text-sm"
+                          >
+                            Remove
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <div className="px-4 py-3 bg-gray-50 text-gray-500 text-sm">
+                  {inventory.length} seed {inventory.length === 1 ? 'variety' : 'varieties'} in your collection
+                </div>
+              </div>
+            )}
+
+            {/* Seed Catalog Reference */}
+            <div className="mt-8">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Seed Catalog Reference</h3>
+              <div className="bg-white rounded-lg shadow overflow-hidden">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="text-left px-4 py-3 text-gray-600 font-medium">Name</th>
+                      <th className="text-left px-4 py-3 text-gray-600 font-medium">Cultivar</th>
+                      <th className="text-left px-4 py-3 text-gray-600 font-medium">Type</th>
+                      <th className="text-left px-4 py-3 text-gray-600 font-medium">Spacing</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {seedCatalog.slice(0, 10).map((seed) => (
+                      <tr key={seed.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 font-medium text-gray-800 capitalize">{seed.commonName}</td>
+                        <td className="px-4 py-3 text-gray-600">{seed.cultivar}</td>
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            seed.plantType === 'vegetable' ? 'bg-green-100 text-green-700' :
+                            seed.plantType === 'herb' ? 'bg-purple-100 text-purple-700' :
+                            'bg-pink-100 text-pink-700'
+                          }`}>
+                            {seed.plantType}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-gray-600">{seed.spacing}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <div className="px-4 py-3 bg-gray-50 text-gray-500 text-sm">
+                  Showing 10 of {seedCatalog.length} available seed varieties
+                </div>
               </div>
             </div>
           </div>
@@ -278,6 +348,13 @@ function App() {
           Garden Planner - Square Foot Gardening Made Easy
         </div>
       </footer>
+
+      {/* Add Seed Modal */}
+      <AddSeedModal
+        isOpen={showAddSeedModal}
+        onClose={() => setShowAddSeedModal(false)}
+        onAdd={addToInventory}
+      />
     </div>
   );
 }
