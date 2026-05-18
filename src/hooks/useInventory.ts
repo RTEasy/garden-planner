@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { seedCatalog } from '../data/seedCatalog';
 
 export interface InventoryItem {
   id: string;
@@ -14,6 +15,7 @@ export interface InventoryItem {
 export interface InventoryItemWithSeed extends InventoryItem {
   seed: {
     commonName: string;
+    genusSpecies: string;
     cultivar: string;
     plantType: string;
     spacing: string;
@@ -48,6 +50,7 @@ export function useInventory() {
           notes,
           seed_catalog (
             common_name,
+            genus_species,
             cultivar,
             plant_type,
             spacing
@@ -67,6 +70,7 @@ export function useInventory() {
         notes: item.notes,
         seed: {
           commonName: item.seed_catalog?.common_name || '',
+          genusSpecies: item.seed_catalog?.genus_species || '',
           cultivar: item.seed_catalog?.cultivar || '',
           plantType: item.seed_catalog?.plant_type || '',
           spacing: item.seed_catalog?.spacing || '',
@@ -170,6 +174,43 @@ export function useInventory() {
     }
   };
 
+  const importAllSeeds = async (): Promise<boolean> => {
+    if (!user) return false;
+
+    try {
+      setError(null);
+
+      // Get existing seed IDs in inventory
+      const existingSeedIds = new Set(inventory.map(item => item.seedId));
+
+      // Filter to seeds not already in inventory
+      const newSeeds = seedCatalog.filter(seed => !existingSeedIds.has(seed.id));
+
+      if (newSeeds.length === 0) {
+        return true; // All seeds already imported
+      }
+
+      // Bulk insert
+      const { error: insertError } = await supabase.from('inventory').insert(
+        newSeeds.map(seed => ({
+          user_id: user.id,
+          seed_id: seed.id,
+          packet_count: 1,
+          quantity_mg: 0,
+        }))
+      );
+
+      if (insertError) throw insertError;
+
+      await fetchInventory();
+      return true;
+    } catch (err) {
+      console.error('Error importing seeds:', err);
+      setError(err instanceof Error ? err.message : 'Failed to import seeds');
+      return false;
+    }
+  };
+
   return {
     inventory,
     loading,
@@ -177,6 +218,7 @@ export function useInventory() {
     addToInventory,
     updateInventoryItem,
     removeFromInventory,
+    importAllSeeds,
     refresh: fetchInventory,
   };
 }

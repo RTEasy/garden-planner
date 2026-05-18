@@ -7,6 +7,7 @@ import { LocationSetup } from './components/location/LocationSetup';
 import { useGardenLocation } from './hooks/useGardenLocation';
 import { useInventory } from './hooks/useInventory';
 import { useSchedule } from './hooks/useSchedule';
+import { useInSeason } from './hooks/useInSeason';
 import { AddSeedModal } from './components/inventory/AddSeedModal';
 import { formatDateRange } from './utils/dateCalculations';
 import './App.css';
@@ -19,8 +20,9 @@ function App() {
   const [showAddSeedModal, setShowAddSeedModal] = useState(false);
   const { user, loading, signOut } = useAuth();
   const { location } = useGardenLocation();
-  const { inventory, loading: inventoryLoading, addToInventory, removeFromInventory } = useInventory();
+  const { inventory, loading: inventoryLoading, addToInventory, removeFromInventory, importAllSeeds } = useInventory();
   const { activeTasks, upcomingTasks, futureTasks, loading: scheduleLoading, hasLocation, hasInventory } = useSchedule();
+  const { activeSeeds, upcomingSeeds } = useInSeason();
 
   const bedNames = {
     1: 'Vegetables & Herbs',
@@ -152,6 +154,68 @@ function App() {
                 </button>
               </div>
             )}
+
+            {/* In Season Now */}
+            {location?.lastFrostDate && (activeSeeds.length > 0 || upcomingSeeds.length > 0) && (
+              <div className="bg-white rounded-lg shadow p-6">
+                <h2 className="text-xl font-semibold text-gray-800 mb-4">In Season Now</h2>
+
+                {activeSeeds.length > 0 && (
+                  <div className="mb-4">
+                    <h3 className="text-sm font-medium text-green-700 mb-2 flex items-center gap-2">
+                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                      Ready to Plant
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {activeSeeds.slice(0, 6).map((item, idx) => (
+                        <div key={`${item.seed.id}-${item.action}-${idx}`} className="bg-green-50 border border-green-200 rounded-lg p-3">
+                          <div className="font-medium text-gray-800 capitalize">{item.seed.commonName}</div>
+                          <div className="text-xs text-gray-500 italic">{item.seed.genusSpecies}</div>
+                          <div className="text-sm text-green-700 mt-1">{item.action}</div>
+                          <div className="text-xs text-gray-500">{formatDateRange(item.dateRange)}</div>
+                        </div>
+                      ))}
+                    </div>
+                    {activeSeeds.length > 6 && (
+                      <p className="text-sm text-gray-500 mt-2">
+                        +{activeSeeds.length - 6} more ready to plant
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {upcomingSeeds.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-medium text-amber-700 mb-2 flex items-center gap-2">
+                      <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
+                      Coming Up
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {upcomingSeeds.slice(0, 6).map((item, idx) => (
+                        <div key={`${item.seed.id}-${item.action}-${idx}`} className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                          <div className="font-medium text-gray-800 capitalize">{item.seed.commonName}</div>
+                          <div className="text-xs text-gray-500 italic">{item.seed.genusSpecies}</div>
+                          <div className="text-sm text-amber-700 mt-1">{item.action}</div>
+                          <div className="text-xs text-gray-500">{formatDateRange(item.dateRange)}</div>
+                        </div>
+                      ))}
+                    </div>
+                    {upcomingSeeds.length > 6 && (
+                      <p className="text-sm text-gray-500 mt-2">
+                        +{upcomingSeeds.length - 6} more coming up
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                <button
+                  onClick={() => setActiveTab('schedule')}
+                  className="mt-4 text-green-700 font-medium text-sm hover:text-green-800"
+                >
+                  View Full Schedule →
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -197,14 +261,22 @@ function App() {
 
         {activeTab === 'inventory' && (
           <div className="space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center flex-wrap gap-2">
               <h2 className="text-xl font-semibold text-gray-800">My Seed Inventory</h2>
-              <button
-                onClick={() => setShowAddSeedModal(true)}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-              >
-                + Add Seeds
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={importAllSeeds}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                >
+                  Import All Seeds
+                </button>
+                <button
+                  onClick={() => setShowAddSeedModal(true)}
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  + Add Seeds
+                </button>
+              </div>
             </div>
 
             {inventoryLoading ? (
@@ -214,19 +286,28 @@ function App() {
             ) : inventory.length === 0 ? (
               <div className="bg-white rounded-lg shadow p-8 text-center">
                 <p className="text-gray-600 mb-4">Your seed inventory is empty.</p>
-                <button
-                  onClick={() => setShowAddSeedModal(true)}
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  Add Your First Seeds
-                </button>
+                <div className="flex gap-3 justify-center">
+                  <button
+                    onClick={importAllSeeds}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Import All Catalog Seeds
+                  </button>
+                  <button
+                    onClick={() => setShowAddSeedModal(true)}
+                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    Add Seeds Manually
+                  </button>
+                </div>
               </div>
             ) : (
-              <div className="bg-white rounded-lg shadow overflow-hidden">
+              <div className="bg-white rounded-lg shadow overflow-hidden overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="text-left px-4 py-3 text-gray-600 font-medium">Name</th>
+                      <th className="text-left px-4 py-3 text-gray-600 font-medium">Species</th>
                       <th className="text-left px-4 py-3 text-gray-600 font-medium">Cultivar</th>
                       <th className="text-left px-4 py-3 text-gray-600 font-medium">Type</th>
                       <th className="text-left px-4 py-3 text-gray-600 font-medium">Packets</th>
@@ -237,6 +318,7 @@ function App() {
                     {inventory.map((item) => (
                       <tr key={item.id} className="hover:bg-gray-50">
                         <td className="px-4 py-3 font-medium text-gray-800 capitalize">{item.seed.commonName}</td>
+                        <td className="px-4 py-3 text-gray-500 italic text-sm">{item.seed.genusSpecies}</td>
                         <td className="px-4 py-3 text-gray-600">{item.seed.cultivar}</td>
                         <td className="px-4 py-3">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
