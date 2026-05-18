@@ -307,7 +307,7 @@ function App() {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="text-left px-4 py-3 text-gray-600 font-medium">Name</th>
-                      <th className="text-left px-4 py-3 text-gray-600 font-medium">Species</th>
+                      <th className="text-left px-4 py-3 text-gray-600 font-medium">Genus & Species</th>
                       <th className="text-left px-4 py-3 text-gray-600 font-medium">Cultivar</th>
                       <th className="text-left px-4 py-3 text-gray-600 font-medium">Type</th>
                       <th className="text-left px-4 py-3 text-gray-600 font-medium">Packets</th>
