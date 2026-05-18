@@ -1,11 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useGardenLocation } from '../../hooks/useGardenLocation';
-
-// Common hardiness zones for the US
-const HARDINESS_ZONES = [
-  '3a', '3b', '4a', '4b', '5a', '5b', '6a', '6b',
-  '7a', '7b', '8a', '8b', '9a', '9b', '10a', '10b', '11a', '11b'
-];
+import { lookupZoneByZip, getFrostDatesByZone, formatFrostDateForInput } from '../../utils/zipCodeLookup';
 
 interface LocationSetupProps {
   onClose?: () => void;
@@ -21,6 +16,7 @@ export function LocationSetup({ onClose }: LocationSetupProps) {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [zoneLookupMessage, setZoneLookupMessage] = useState<string | null>(null);
 
   // Load existing data
   useEffect(() => {
@@ -31,6 +27,30 @@ export function LocationSetup({ onClose }: LocationSetupProps) {
       setFirstFrostDate(location.firstFrostDate);
     }
   }, [location]);
+
+  // Auto-lookup zone when zip code changes
+  useEffect(() => {
+    if (zipCode.length >= 3) {
+      const result = lookupZoneByZip(zipCode);
+      if (result.zone) {
+        setHardinessZone(result.zone);
+        setZoneLookupMessage(`Zone ${result.zone} detected`);
+
+        // Also suggest frost dates if not already set
+        const frostDates = getFrostDatesByZone(result.zone);
+        if (frostDates && !lastFrostDate) {
+          setLastFrostDate(formatFrostDateForInput(frostDates.lastFrost));
+        }
+        if (frostDates && !firstFrostDate) {
+          setFirstFrostDate(formatFrostDateForInput(frostDates.firstFrost));
+        }
+      } else {
+        setZoneLookupMessage(result.error);
+      }
+    } else {
+      setZoneLookupMessage(null);
+    }
+  }, [zipCode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,41 +116,35 @@ export function LocationSetup({ onClose }: LocationSetupProps) {
               maxLength={10}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
             />
+            <p className="text-xs text-gray-400 mt-1">
+              Enter your zip code to auto-detect your zone
+            </p>
           </div>
 
           <div>
             <label htmlFor="hardinessZone" className="block text-sm font-medium text-gray-700 mb-1">
               USDA Hardiness Zone
             </label>
-            <select
+            <input
               id="hardinessZone"
+              type="text"
               value={hardinessZone}
               onChange={(e) => setHardinessZone(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-            >
-              <option value="">Select zone...</option>
-              {HARDINESS_ZONES.map((zone) => (
-                <option key={zone} value={zone}>
-                  Zone {zone}
-                </option>
-              ))}
-            </select>
-            <a
-              href="https://planthardiness.ars.usda.gov/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-green-600 hover:text-green-700 mt-1 inline-block"
-            >
-              Find your zone →
-            </a>
+              placeholder="e.g., 7a"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-gray-50"
+            />
+            {zoneLookupMessage && (
+              <p className={`text-xs mt-1 ${zoneLookupMessage.includes('detected') ? 'text-green-600' : 'text-amber-600'}`}>
+                {zoneLookupMessage}
+              </p>
+            )}
           </div>
         </div>
 
         <div className="border-t pt-6">
-          <h3 className="text-lg font-medium text-gray-800 mb-4">Frost Dates</h3>
+          <h3 className="text-lg font-medium text-gray-800 mb-2">Frost Dates</h3>
           <p className="text-gray-500 text-sm mb-4">
-            Enter your average last spring frost and first fall frost dates.
-            These are used to calculate planting windows.
+            These dates are auto-suggested based on your zone. Adjust them if you know your local averages.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -17,7 +17,7 @@ A web application for managing a square foot garden using 3 raised beds (4x4 eac
 
 ## Existing Data Assets
 
-Located in Google Drive (`~/Library/CloudStorage/GoogleDrive-ryanthomaseasley@gmail.com/My Drive/gardening/`):
+Located in Google Drive (`gardening/` folder):
 
 | File | Description |
 |------|-------------|
@@ -380,7 +380,7 @@ garden-planner/
   - Pushed to GitHub: https://github.com/RTEasy/garden-planner
   - Deployed to Vercel: https://garden-planner-three-delta.vercel.app
 
-  **Project location**: `~/Library/CloudStorage/GoogleDrive-ryanthomaseasley@gmail.com/My Drive/gardening/garden-planner/`
+  **Project location**: Local Google Drive sync folder
 
 ---
 
