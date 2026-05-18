@@ -11,8 +11,8 @@ interface AddSeedModalProps {
 export function AddSeedModal({ isOpen, onClose, onAdd }: AddSeedModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSeed, setSelectedSeed] = useState<Seed | null>(null);
-  const [packetCount, setPacketCount] = useState(1);
-  const [quantityMg, setQuantityMg] = useState(0);
+  const [packetCount, setPacketCount] = useState('1');
+  const [quantityMg, setQuantityMg] = useState('');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -25,16 +25,16 @@ export function AddSeedModal({ isOpen, onClose, onAdd }: AddSeedModalProps) {
     setSubmitting(true);
     const success = await onAdd(
       selectedSeed.id,
-      packetCount,
-      quantityMg,
+      parseInt(packetCount) || 0,
+      parseInt(quantityMg) || 0,
       notes.trim() || undefined
     );
 
     if (success) {
       setSearchQuery('');
       setSelectedSeed(null);
-      setPacketCount(1);
-      setQuantityMg(0);
+      setPacketCount('1');
+      setQuantityMg('');
       setNotes('');
       onClose();
     }
@@ -44,8 +44,8 @@ export function AddSeedModal({ isOpen, onClose, onAdd }: AddSeedModalProps) {
   const handleClose = () => {
     setSearchQuery('');
     setSelectedSeed(null);
-    setPacketCount(1);
-    setQuantityMg(0);
+    setPacketCount('1');
+    setQuantityMg('');
     setNotes('');
     onClose();
   };
@@ -132,7 +132,7 @@ export function AddSeedModal({ isOpen, onClose, onAdd }: AddSeedModalProps) {
                     type="number"
                     min="0"
                     value={packetCount}
-                    onChange={(e) => setPacketCount(parseInt(e.target.value) || 0)}
+                    onChange={(e) => setPacketCount(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   />
                 </div>
@@ -144,7 +144,8 @@ export function AddSeedModal({ isOpen, onClose, onAdd }: AddSeedModalProps) {
                     type="number"
                     min="0"
                     value={quantityMg}
-                    onChange={(e) => setQuantityMg(parseInt(e.target.value) || 0)}
+                    onChange={(e) => setQuantityMg(e.target.value)}
+                    placeholder="0"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   />
                 </div>
