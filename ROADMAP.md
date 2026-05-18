@@ -411,6 +411,15 @@ garden-planner/
 
   **Next up**: Bed visualization (assign plants to squares), PWA setup
 
+- **2026-05-18 (Session 2 continued)**: Integrated Farmers Almanac data:
+  - Added Almanac-specific date fields (almanacIndoors, almanacTransplant, almanacDirectSow, almanacLastPlanting)
+  - Updated all 27 seeds with Calistoga, CA planting dates (last frost Mar 25, first frost Nov 13)
+  - Created parseAlmanacDateRange() to handle "Jan 27-Feb 10" format dates
+  - Schedule now shows 3 task types: Start Indoors, Transplant, Direct Sow
+  - Seed packet card displays Almanac planting calendar
+
+  **Next up**: Bed visualization, PWA setup, possibly add more seeds from Almanac list
+
 ---
 
 ## Next Steps
