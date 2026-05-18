@@ -1,0 +1,214 @@
+import { useState } from 'react';
+import { seedCatalog } from './data/seedCatalog';
+import { BED_POSITIONS } from './types';
+import './App.css';
+
+type Tab = 'dashboard' | 'beds' | 'inventory' | 'schedule';
+
+function App() {
+  const [activeTab, setActiveTab] = useState<Tab>('dashboard');
+  const [selectedBed, setSelectedBed] = useState<1 | 2 | 3>(1);
+
+  const bedNames = {
+    1: 'Vegetables & Herbs',
+    2: 'Cucumbers & Alliums',
+    3: 'Cut Flowers & Herbs',
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-green-700 text-white shadow-lg">
+        <div className="max-w-6xl mx-auto px-4 py-4">
+          <h1 className="text-2xl font-bold">Garden Planner</h1>
+          <p className="text-green-200 text-sm">Square Foot Garden Management</p>
+        </div>
+      </header>
+
+      {/* Navigation */}
+      <nav className="bg-white shadow">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="flex space-x-4">
+            {(['dashboard', 'beds', 'inventory', 'schedule'] as Tab[]).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-4 py-3 font-medium capitalize transition-colors ${
+                  activeTab === tab
+                    ? 'text-green-700 border-b-2 border-green-700'
+                    : 'text-gray-600 hover:text-green-600'
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+        </div>
+      </nav>
+
+      {/* Main Content */}
+      <main className="max-w-6xl mx-auto px-4 py-6">
+        {activeTab === 'dashboard' && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">Welcome to Your Garden</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-green-50 rounded-lg p-4">
+                  <div className="text-3xl font-bold text-green-700">3</div>
+                  <div className="text-gray-600">Raised Beds</div>
+                </div>
+                <div className="bg-blue-50 rounded-lg p-4">
+                  <div className="text-3xl font-bold text-blue-700">48</div>
+                  <div className="text-gray-600">Square Feet</div>
+                </div>
+                <div className="bg-amber-50 rounded-lg p-4">
+                  <div className="text-3xl font-bold text-amber-700">{seedCatalog.length}</div>
+                  <div className="text-gray-600">Seed Varieties</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h2>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={() => setActiveTab('beds')}
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  View Beds
+                </button>
+                <button
+                  onClick={() => setActiveTab('inventory')}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Manage Seeds
+                </button>
+                <button
+                  onClick={() => setActiveTab('schedule')}
+                  className="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-colors"
+                >
+                  View Schedule
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <h3 className="font-semibold text-yellow-800">Setup Required</h3>
+              <p className="text-yellow-700 text-sm mt-1">
+                Connect to Supabase to enable cloud sync across devices.
+                Add your credentials to <code className="bg-yellow-100 px-1 rounded">.env.local</code>
+              </p>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'beds' && (
+          <div className="space-y-6">
+            <div className="flex gap-2">
+              {([1, 2, 3] as const).map((bed) => (
+                <button
+                  key={bed}
+                  onClick={() => setSelectedBed(bed)}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    selectedBed === bed
+                      ? 'bg-green-600 text-white'
+                      : 'bg-white text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  Box {bed}
+                </button>
+              ))}
+            </div>
+
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-xl font-semibold text-gray-800 mb-2">
+                Box {selectedBed}: {bedNames[selectedBed]}
+              </h2>
+              <p className="text-gray-500 text-sm mb-4">4' x 4' raised bed (16 square feet)</p>
+
+              {/* Bed Grid */}
+              <div className="grid grid-cols-4 gap-2 max-w-md">
+                {BED_POSITIONS.map((position) => (
+                  <button
+                    key={position}
+                    className="aspect-square bg-amber-100 hover:bg-amber-200 border-2 border-amber-300 rounded-lg flex items-center justify-center text-amber-800 font-medium transition-colors"
+                  >
+                    {position}
+                  </button>
+                ))}
+              </div>
+              <p className="text-gray-400 text-xs mt-4">Click a square to view or assign plants</p>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'inventory' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold text-gray-800">Seed Inventory</h2>
+              <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                + Add Seeds
+              </button>
+            </div>
+
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="text-left px-4 py-3 text-gray-600 font-medium">Name</th>
+                    <th className="text-left px-4 py-3 text-gray-600 font-medium">Cultivar</th>
+                    <th className="text-left px-4 py-3 text-gray-600 font-medium">Type</th>
+                    <th className="text-left px-4 py-3 text-gray-600 font-medium">Spacing</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {seedCatalog.slice(0, 10).map((seed) => (
+                    <tr key={seed.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 font-medium text-gray-800 capitalize">{seed.commonName}</td>
+                      <td className="px-4 py-3 text-gray-600">{seed.cultivar}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          seed.plantType === 'vegetable' ? 'bg-green-100 text-green-700' :
+                          seed.plantType === 'herb' ? 'bg-purple-100 text-purple-700' :
+                          'bg-pink-100 text-pink-700'
+                        }`}>
+                          {seed.plantType}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-gray-600">{seed.spacing}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className="px-4 py-3 bg-gray-50 text-gray-500 text-sm">
+                Showing 10 of {seedCatalog.length} seed varieties
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'schedule' && (
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold text-gray-800">Planting Schedule</h2>
+
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="text-center py-8 text-gray-500">
+                <p className="text-lg">Schedule generation coming soon!</p>
+                <p className="text-sm mt-2">Set up your garden location to generate a personalized planting schedule.</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-gray-100 border-t mt-auto">
+        <div className="max-w-6xl mx-auto px-4 py-4 text-center text-gray-500 text-sm">
+          Garden Planner - Square Foot Gardening Made Easy
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+export default App;
