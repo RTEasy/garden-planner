@@ -190,13 +190,13 @@ export function useInventory() {
         return true; // All seeds already imported
       }
 
-      // Bulk insert
+      // Bulk insert with default inventory quantities from catalog
       const { error: insertError } = await supabase.from('inventory').insert(
         newSeeds.map(seed => ({
           user_id: user.id,
           seed_id: seed.id,
           packet_count: 1,
-          quantity_mg: 0,
+          quantity_mg: seed.seedInventoryMg || 0,
         }))
       );
 

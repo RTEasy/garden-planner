@@ -13,7 +13,7 @@ export interface Seed {
   daysToEmerge: string;
   sun: string;
   spacing: string;
-  seedQuantityPerSpace: number;
+  seedQuantityPerSpace: number | string;
   depth: string;
   sowTimeOutside: string;
   insideStartTime: string;
@@ -22,6 +22,7 @@ export interface Seed {
   germinationInstructions: string;
   animalResistance: string;
   bloom: string;
+  seedInventoryMg: number;
 }
 
 export interface InventoryItem {

@@ -12,7 +12,7 @@ export const seedCatalog: Seed[] = [
     daysToEmerge: '5 to 15 days',
     sun: 'full sun to part shade',
     spacing: '6 inches',
-    seedQuantityPerSpace: 25,
+    seedQuantityPerSpace: '20 to 30',
     depth: 'surface',
     sowTimeOutside: '1 to 2 weeks before last frost',
     insideStartTime: '4 to 6 weeks before last frost',
@@ -21,6 +21,7 @@ export const seedCatalog: Seed[] = [
     germinationInstructions: '',
     animalResistance: 'deer resistant',
     bloom: 'spring',
+    seedInventoryMg: 250,
   },
   {
     id: 'alyssum-oriental-nights',
@@ -32,7 +33,7 @@ export const seedCatalog: Seed[] = [
     daysToEmerge: '5 to 15 days',
     sun: 'full sun to part shade',
     spacing: '6 inches',
-    seedQuantityPerSpace: 25,
+    seedQuantityPerSpace: '20 to 30',
     depth: 'surface',
     sowTimeOutside: '1 to 2 weeks before last frost',
     insideStartTime: '4 to 6 weeks before last frost',
@@ -41,6 +42,7 @@ export const seedCatalog: Seed[] = [
     germinationInstructions: '',
     animalResistance: 'deer resistant',
     bloom: 'spring',
+    seedInventoryMg: 250,
   },
   {
     id: 'nasturtium-fiesta-blend',
@@ -52,7 +54,7 @@ export const seedCatalog: Seed[] = [
     daysToEmerge: '7 to 14 days',
     sun: 'full sun to part shade',
     spacing: '8 to 12 inches',
-    seedQuantityPerSpace: 3,
+    seedQuantityPerSpace: '3 seeds',
     depth: '1/2 to 1 inch',
     sowTimeOutside: '1 to 2 weeks after last frost',
     insideStartTime: 'not recommended',
@@ -61,6 +63,7 @@ export const seedCatalog: Seed[] = [
     germinationInstructions: 'soak seed in water for 12 hours before sowing. Darkness aids germination; sow at recommended depth.',
     animalResistance: 'rabbit and deer resistant',
     bloom: 'late spring',
+    seedInventoryMg: 2000,
   },
   {
     id: 'cosmos-candyfloss-red',
@@ -81,6 +84,7 @@ export const seedCatalog: Seed[] = [
     germinationInstructions: 'light cover or surface sow. Temp 70-75F. Do not plant too deep.',
     animalResistance: 'moderately deer resistant',
     bloom: 'summer to frost',
+    seedInventoryMg: 0,
   },
   {
     id: 'lovage',
@@ -101,6 +105,7 @@ export const seedCatalog: Seed[] = [
     germinationInstructions: 'sow in fall for spring germination or cold stratify seeds',
     animalResistance: 'deer and rabbit resistant',
     bloom: 'summer',
+    seedInventoryMg: 0,
   },
   {
     id: 'dill-bouquet',
@@ -121,6 +126,7 @@ export const seedCatalog: Seed[] = [
     germinationInstructions: 'seeds need light; barely cover. Optimal temp 60-70F. Keep soil moist.',
     animalResistance: 'deer and rabbit resistant',
     bloom: 'summer',
+    seedInventoryMg: 0,
   },
   {
     id: 'cucumber-persian-pickling',
@@ -141,6 +147,7 @@ export const seedCatalog: Seed[] = [
     germinationInstructions: 'soak seeds 4-6 hours before planting. Soil temp 70-90F for germination.',
     animalResistance: 'deer and rabbit resistant',
     bloom: 'n/a',
+    seedInventoryMg: 0,
   },
   {
     id: 'parsley-giant-of-italy',
@@ -161,6 +168,7 @@ export const seedCatalog: Seed[] = [
     germinationInstructions: 'soak seeds overnight in warm water. Slow germination (2-5 weeks). Optimal temp 65-70F.',
     animalResistance: 'not resistant',
     bloom: 'n/a',
+    seedInventoryMg: 0,
   },
   {
     id: 'thyme-common',
@@ -181,6 +189,7 @@ export const seedCatalog: Seed[] = [
     germinationInstructions: 'surface sow; needs light to germinate. Temp 60-75F. Keep moist until germination.',
     animalResistance: 'deer and rabbit resistant',
     bloom: 'late spring to summer',
+    seedInventoryMg: 0,
   },
   {
     id: 'bells-of-ireland',
@@ -201,6 +210,7 @@ export const seedCatalog: Seed[] = [
     germinationInstructions: 'chill seeds 1-2 weeks at 35-40F before sowing. Soak 24-48 hours. Needs light.',
     animalResistance: 'deer and rabbit resistant',
     bloom: 'mid-summer to fall',
+    seedInventoryMg: 0,
   },
   {
     id: 'canterbury-bells',
@@ -221,6 +231,7 @@ export const seedCatalog: Seed[] = [
     germinationInstructions: 'needs light to germinate; press into soil surface. Temp 70-75F. Keep cool after germination.',
     animalResistance: 'deer and rabbit resistant',
     bloom: 'late spring to summer (year 2)',
+    seedInventoryMg: 0,
   },
   {
     id: 'lemongrass',
@@ -241,6 +252,7 @@ export const seedCatalog: Seed[] = [
     germinationInstructions: 'needs light; barely cover. Bottom heat helps (68-70F minimum). Keep consistently moist.',
     animalResistance: 'deer and rabbit resistant',
     bloom: 'n/a',
+    seedInventoryMg: 0,
   },
   {
     id: 'beets-golden',
@@ -261,6 +273,7 @@ export const seedCatalog: Seed[] = [
     germinationInstructions: 'soak seeds 1-2 hours before planting. Multi-germ seeds require thinning.',
     animalResistance: 'not resistant',
     bloom: 'n/a',
+    seedInventoryMg: 0,
   },
   {
     id: 'onion-zebrune-shallot',
@@ -281,6 +294,7 @@ export const seedCatalog: Seed[] = [
     germinationInstructions: 'sow shallow. Soil temp 60-75F. Keep evenly moist. Slow to germinate.',
     animalResistance: 'deer and rabbit resistant',
     bloom: 'n/a',
+    seedInventoryMg: 0,
   },
   {
     id: 'beets-detroit-dark-red',
@@ -301,6 +315,7 @@ export const seedCatalog: Seed[] = [
     germinationInstructions: 'soak seeds 1 hour before planting. Multi-germ seeds require thinning.',
     animalResistance: 'not resistant',
     bloom: 'n/a',
+    seedInventoryMg: 0,
   },
   {
     id: 'onion-ishikura-bunching',
@@ -321,6 +336,7 @@ export const seedCatalog: Seed[] = [
     germinationInstructions: 'sow in clumps (6-8 seeds per cell for transplants). Soil temp 41-86F.',
     animalResistance: 'deer and rabbit resistant',
     bloom: 'late spring to summer',
+    seedInventoryMg: 0,
   },
   {
     id: 'cucumber-lemon',
@@ -341,6 +357,7 @@ export const seedCatalog: Seed[] = [
     germinationInstructions: 'soil temp 70-85F for germination. Keep soil moist. Can train on trellis.',
     animalResistance: 'deer and rabbit resistant',
     bloom: 'n/a',
+    seedInventoryMg: 0,
   },
   {
     id: 'celery-delne',
@@ -361,6 +378,7 @@ export const seedCatalog: Seed[] = [
     germinationInstructions: 'needs light to germinate; sow on surface. Soak seeds overnight. Low germination rate; sow extra.',
     animalResistance: 'not resistant',
     bloom: 'n/a',
+    seedInventoryMg: 0,
   },
   {
     id: 'chives-common',
@@ -381,6 +399,7 @@ export const seedCatalog: Seed[] = [
     germinationInstructions: 'sow in clusters (5-10 seeds per cell). Temp 60-70F. Keep moist.',
     animalResistance: 'deer and rabbit resistant',
     bloom: 'late spring to early summer',
+    seedInventoryMg: 0,
   },
   {
     id: 'pepper-jimmy-nardello',
@@ -401,6 +420,7 @@ export const seedCatalog: Seed[] = [
     germinationInstructions: 'heat mat recommended (75-85F). Keep soil warm and moist.',
     animalResistance: 'moderately resistant',
     bloom: 'n/a',
+    seedInventoryMg: 0,
   },
   {
     id: 'tomato-alices-dream',
@@ -421,6 +441,7 @@ export const seedCatalog: Seed[] = [
     germinationInstructions: 'temp 70-85F for germination. Keep moist. Harden off before transplanting.',
     animalResistance: 'not deer resistant',
     bloom: 'n/a',
+    seedInventoryMg: 0,
   },
   {
     id: 'mustard-greens-japanese-giant-red',
@@ -441,6 +462,7 @@ export const seedCatalog: Seed[] = [
     germinationInstructions: 'direct sow in cool weather. Soil temp 40-75F. Fast germination and growth.',
     animalResistance: 'moderately deer resistant',
     bloom: 'n/a',
+    seedInventoryMg: 0,
   },
   {
     id: 'marigold-chica-flame',
@@ -461,6 +483,7 @@ export const seedCatalog: Seed[] = [
     germinationInstructions: 'warm soil required (65-75F). Easy germination. Keep moist but not wet.',
     animalResistance: 'deer and rabbit resistant',
     bloom: 'late spring to frost',
+    seedInventoryMg: 0,
   },
   {
     id: 'cosmos-candyfloss-pink-sunrise',
@@ -481,6 +504,7 @@ export const seedCatalog: Seed[] = [
     germinationInstructions: 'light cover or surface sow. Temp 70-75F. Do not plant too deep.',
     animalResistance: 'moderately deer resistant',
     bloom: 'summer to frost',
+    seedInventoryMg: 0,
   },
   {
     id: 'cosmos-apricot-lemonade',
@@ -501,6 +525,7 @@ export const seedCatalog: Seed[] = [
     germinationInstructions: 'light cover or surface sow. Temp 70-75F. Do not plant too deep.',
     animalResistance: 'moderately deer resistant',
     bloom: 'summer to frost',
+    seedInventoryMg: 0,
   },
   {
     id: 'california-poppy-jelly-beans',
@@ -521,6 +546,7 @@ export const seedCatalog: Seed[] = [
     germinationInstructions: 'direct sow in place; does not transplant well. Needs light; barely cover. Cool temps (55-65F).',
     animalResistance: 'deer resistant',
     bloom: 'late winter to early summer',
+    seedInventoryMg: 0,
   },
   {
     id: 'fennel-mammoth',
@@ -541,6 +567,7 @@ export const seedCatalog: Seed[] = [
     germinationInstructions: 'soak seeds 24 hours to improve germination. Does not transplant well.',
     animalResistance: 'deer resistant',
     bloom: 'summer',
+    seedInventoryMg: 0,
   },
 ];
 
