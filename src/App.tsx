@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { seedCatalog } from './data/seedCatalog';
+import { seedCatalog, getSeedById } from './data/seedCatalog';
 import { BED_POSITIONS } from './types';
 import { useAuth } from './context/AuthContext';
 import { AuthForm } from './components/auth/AuthForm';
@@ -9,6 +9,7 @@ import { useInventory } from './hooks/useInventory';
 import { useSchedule } from './hooks/useSchedule';
 import { useInSeason } from './hooks/useInSeason';
 import { AddSeedModal } from './components/inventory/AddSeedModal';
+import { SeedPacketCard } from './components/inventory/SeedPacketCard';
 import { formatDateRange } from './utils/dateCalculations';
 import './App.css';
 
@@ -18,6 +19,7 @@ function App() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [selectedBed, setSelectedBed] = useState<1 | 2 | 3>(1);
   const [showAddSeedModal, setShowAddSeedModal] = useState(false);
+  const [hoveredSeed, setHoveredSeed] = useState<string | null>(null);
   const { user, loading, signOut } = useAuth();
   const { location } = useGardenLocation();
   const { inventory, loading: inventoryLoading, addToInventory, removeFromInventory, removeAllFromInventory, importAllSeeds } = useInventory();
@@ -356,39 +358,52 @@ function App() {
 
             {/* Seed Catalog Reference */}
             <div className="mt-8">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Seed Catalog Reference</h3>
-              <div className="bg-white rounded-lg shadow overflow-hidden">
-                <table className="w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="text-left px-4 py-3 text-gray-600 font-medium">Name</th>
-                      <th className="text-left px-4 py-3 text-gray-600 font-medium">Cultivar</th>
-                      <th className="text-left px-4 py-3 text-gray-600 font-medium">Type</th>
-                      <th className="text-left px-4 py-3 text-gray-600 font-medium">Spacing</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {seedCatalog.slice(0, 10).map((seed) => (
-                      <tr key={seed.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 font-medium text-gray-800 capitalize">{seed.commonName}</td>
-                        <td className="px-4 py-3 text-gray-600">{seed.cultivar}</td>
-                        <td className="px-4 py-3">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            seed.plantType === 'vegetable' ? 'bg-green-100 text-green-700' :
-                            seed.plantType === 'herb' ? 'bg-purple-100 text-purple-700' :
-                            'bg-pink-100 text-pink-700'
-                          }`}>
-                            {seed.plantType}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-gray-600">{seed.spacing}</td>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Seed Catalog</h3>
+              <p className="text-sm text-gray-500 mb-4">Hover over a seed to view packet details</p>
+              <div className="relative">
+                <div className="bg-white rounded-lg shadow overflow-hidden">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="text-left px-4 py-3 text-gray-600 font-medium">Name</th>
+                        <th className="text-left px-4 py-3 text-gray-600 font-medium">Cultivar</th>
+                        <th className="text-left px-4 py-3 text-gray-600 font-medium">Type</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <div className="px-4 py-3 bg-gray-50 text-gray-500 text-sm">
-                  Showing 10 of {seedCatalog.length} available seed varieties
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {seedCatalog.map((seed) => (
+                        <tr
+                          key={seed.id}
+                          className="hover:bg-amber-50 cursor-pointer transition-colors"
+                          onMouseEnter={() => setHoveredSeed(seed.id)}
+                          onMouseLeave={() => setHoveredSeed(null)}
+                        >
+                          <td className="px-4 py-3 font-medium text-gray-800 capitalize">{seed.commonName}</td>
+                          <td className="px-4 py-3 text-gray-600">{seed.cultivar}</td>
+                          <td className="px-4 py-3">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              seed.plantType === 'vegetable' ? 'bg-green-100 text-green-700' :
+                              seed.plantType === 'herb' ? 'bg-purple-100 text-purple-700' :
+                              'bg-pink-100 text-pink-700'
+                            }`}>
+                              {seed.plantType}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <div className="px-4 py-3 bg-gray-50 text-gray-500 text-sm">
+                    {seedCatalog.length} seed varieties available
+                  </div>
                 </div>
+
+                {/* Seed Packet Tooltip */}
+                {hoveredSeed && getSeedById(hoveredSeed) && (
+                  <div className="absolute top-0 right-0 transform translate-x-full ml-4 z-50 hidden lg:block">
+                    <SeedPacketCard seed={getSeedById(hoveredSeed)!} />
+                  </div>
+                )}
               </div>
             </div>
           </div>
