@@ -3,14 +3,17 @@ import { seedCatalog } from './data/seedCatalog';
 import { BED_POSITIONS } from './types';
 import { useAuth } from './context/AuthContext';
 import { AuthForm } from './components/auth/AuthForm';
+import { LocationSetup } from './components/location/LocationSetup';
+import { useGardenLocation } from './hooks/useGardenLocation';
 import './App.css';
 
-type Tab = 'dashboard' | 'beds' | 'inventory' | 'schedule';
+type Tab = 'dashboard' | 'beds' | 'inventory' | 'schedule' | 'settings';
 
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [selectedBed, setSelectedBed] = useState<1 | 2 | 3>(1);
   const { user, loading, signOut } = useAuth();
+  const { location } = useGardenLocation();
 
   const bedNames = {
     1: 'Vegetables & Herbs',
@@ -56,12 +59,12 @@ function App() {
       {/* Navigation */}
       <nav className="bg-white shadow">
         <div className="max-w-6xl mx-auto px-4">
-          <div className="flex space-x-4">
-            {(['dashboard', 'beds', 'inventory', 'schedule'] as Tab[]).map((tab) => (
+          <div className="flex space-x-4 overflow-x-auto">
+            {(['dashboard', 'beds', 'inventory', 'schedule', 'settings'] as Tab[]).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-4 py-3 font-medium capitalize transition-colors ${
+                className={`px-4 py-3 font-medium capitalize transition-colors whitespace-nowrap ${
                   activeTab === tab
                     ? 'text-green-700 border-b-2 border-green-700'
                     : 'text-gray-600 hover:text-green-600'
@@ -120,12 +123,28 @@ function App() {
               </div>
             </div>
 
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <h3 className="font-semibold text-green-800">You're signed in!</h3>
-              <p className="text-green-700 text-sm mt-1">
-                Your data will sync across all your devices automatically.
-              </p>
-            </div>
+            {/* Location status */}
+            {location?.lastFrostDate ? (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <h3 className="font-semibold text-green-800">Garden Location Set</h3>
+                <p className="text-green-700 text-sm mt-1">
+                  Zone {location.hardinessZone} • Last frost: {new Date(location.lastFrostDate).toLocaleDateString()}
+                </p>
+              </div>
+            ) : (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <h3 className="font-semibold text-amber-800">Set Up Your Location</h3>
+                <p className="text-amber-700 text-sm mt-1">
+                  Add your frost dates to get personalized planting schedules.
+                </p>
+                <button
+                  onClick={() => setActiveTab('settings')}
+                  className="mt-2 text-amber-800 font-medium text-sm hover:text-amber-900"
+                >
+                  Go to Settings →
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -218,12 +237,37 @@ function App() {
           <div className="space-y-6">
             <h2 className="text-xl font-semibold text-gray-800">Planting Schedule</h2>
 
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="text-center py-8 text-gray-500">
-                <p className="text-lg">Schedule generation coming soon!</p>
-                <p className="text-sm mt-2">Set up your garden location to generate a personalized planting schedule.</p>
+            {location?.lastFrostDate ? (
+              <div className="bg-white rounded-lg shadow p-6">
+                <div className="text-center py-8 text-gray-500">
+                  <p className="text-lg">Schedule generation coming soon!</p>
+                  <p className="text-sm mt-2">
+                    Based on your last frost date of {new Date(location.lastFrostDate).toLocaleDateString()}
+                  </p>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="bg-white rounded-lg shadow p-6">
+                <div className="text-center py-8">
+                  <p className="text-lg text-gray-800">Set up your garden location first</p>
+                  <p className="text-gray-500 text-sm mt-2">
+                    We need your frost dates to generate a personalized planting schedule.
+                  </p>
+                  <button
+                    onClick={() => setActiveTab('settings')}
+                    className="mt-4 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    Set Location
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'settings' && (
+          <div className="space-y-6">
+            <LocationSetup />
           </div>
         )}
       </main>
