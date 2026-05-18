@@ -211,6 +211,28 @@ export function useInventory() {
     }
   };
 
+  const removeAllFromInventory = async (): Promise<boolean> => {
+    if (!user) return false;
+
+    try {
+      setError(null);
+
+      const { error: deleteError } = await supabase
+        .from('inventory')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (deleteError) throw deleteError;
+
+      await fetchInventory();
+      return true;
+    } catch (err) {
+      console.error('Error removing all from inventory:', err);
+      setError(err instanceof Error ? err.message : 'Failed to remove all from inventory');
+      return false;
+    }
+  };
+
   return {
     inventory,
     loading,
@@ -218,6 +240,7 @@ export function useInventory() {
     addToInventory,
     updateInventoryItem,
     removeFromInventory,
+    removeAllFromInventory,
     importAllSeeds,
     refresh: fetchInventory,
   };

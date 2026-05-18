@@ -20,7 +20,7 @@ function App() {
   const [showAddSeedModal, setShowAddSeedModal] = useState(false);
   const { user, loading, signOut } = useAuth();
   const { location } = useGardenLocation();
-  const { inventory, loading: inventoryLoading, addToInventory, removeFromInventory, importAllSeeds } = useInventory();
+  const { inventory, loading: inventoryLoading, addToInventory, removeFromInventory, removeAllFromInventory, importAllSeeds } = useInventory();
   const { activeTasks, upcomingTasks, futureTasks, loading: scheduleLoading, hasLocation, hasInventory } = useSchedule();
   const { activeSeeds, upcomingSeeds } = useInSeason();
 
@@ -269,6 +269,12 @@ function App() {
                   className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
                 >
                   Import All Seeds
+                </button>
+                <button
+                  onClick={removeAllFromInventory}
+                  className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm"
+                >
+                  Remove All
                 </button>
                 <button
                   onClick={() => setShowAddSeedModal(true)}
