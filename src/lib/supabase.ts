@@ -1,17 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://xhworgztqdsgwhcqsfxh.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhod29yZ3p0cWRzZ3doY3FzZnhoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNjQwNzEsImV4cCI6MjA5NDY0MDA3MX0.cJQVzTqGYnIAGcsRwRgiGWa9zA6yiSPlzT-k7Cak7xs';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn(
-    'Supabase credentials not found. Running in offline mode. ' +
-    'Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env.local to enable cloud sync.'
-  );
-}
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-export const supabase = supabaseUrl && supabaseAnonKey
-  ? createClient(supabaseUrl, supabaseAnonKey)
-  : null;
-
-export const isSupabaseConfigured = !!supabase;
+export const isSupabaseConfigured = true;
