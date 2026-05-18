@@ -390,7 +390,26 @@ garden-planner/
   - Dashboard now shows actual inventory count
   - Deployed to Vercel: https://garden-planner-chi-gold.vercel.app
 
-  **Next up**: Test inventory features, then build planting schedule generator
+- **2026-05-18 (Session 2)**: Major feature additions:
+  - **Planting Schedule Generator**:
+    - Created `dateCalculations.ts` utility to parse timing strings ("4-6 weeks before last frost")
+    - Created `useSchedule` hook to generate tasks from inventory + frost dates
+    - Schedule tab shows Active/Upcoming/Future tasks with color coding
+  - **In Season Feature**:
+    - Created `useInSeason` hook to identify currently plantable seeds
+    - Dashboard shows "In Season Now" section with ready-to-plant seeds
+  - **Inventory Improvements**:
+    - Added "Import All Seeds" button for bulk catalog import
+    - Added "Remove All" button for testing
+    - Added Genus & Species column to inventory table
+    - Seed catalog now includes `seedInventoryMg` from original CSV
+  - **Seed Packet Hover Card**:
+    - Created `SeedPacketCard` component styled like a seed packet
+    - Shows all seed details on hover (planting times, spacing, germination tips, etc.)
+    - Fixed positioning keeps card in view while scrolling
+  - **Project moved from Google Drive to GitHub** as source of truth
+
+  **Next up**: Bed visualization (assign plants to squares), PWA setup
 
 ---
 
@@ -407,5 +426,8 @@ garden-planner/
 9. ~~Add user authentication (sign up / login)~~ DONE
 10. ~~Build inventory management (add seeds to your collection)~~ DONE
 11. ~~Set up garden location with frost dates~~ DONE
-12. Build planting schedule generator based on frost dates + inventory
-13. Improve bed visualization (assign plants to squares)
+12. ~~Build planting schedule generator based on frost dates + inventory~~ DONE
+13. ~~In-season seed display on dashboard~~ DONE
+14. ~~Seed packet hover card with full details~~ DONE
+15. Improve bed visualization (assign plants to squares)
+16. Add seed images to packet cards
