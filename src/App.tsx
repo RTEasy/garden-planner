@@ -398,9 +398,9 @@ function App() {
                   </div>
                 </div>
 
-                {/* Seed Packet Tooltip */}
+                {/* Seed Packet Tooltip - Fixed position to stay in view */}
                 {hoveredSeed && getSeedById(hoveredSeed) && (
-                  <div className="absolute top-0 right-0 transform translate-x-full ml-4 z-50 hidden lg:block">
+                  <div className="fixed top-24 right-4 z-50 hidden lg:block">
                     <SeedPacketCard seed={getSeedById(hoveredSeed)!} />
                   </div>
                 )}
