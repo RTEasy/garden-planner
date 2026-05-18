@@ -66,9 +66,25 @@ export function SeedPacketCard({ seed }: SeedPacketCardProps) {
         </div>
 
         <div className="border-t pt-2 mt-2">
-          <div className="font-semibold text-gray-600 mb-1">Planting Times:</div>
-          <div><span className="text-gray-500">Outdoors:</span> {seed.sowTimeOutside}</div>
-          <div><span className="text-gray-500">Indoors:</span> {seed.insideStartTime}</div>
+          <div className="font-semibold text-gray-600 mb-1">Planting Calendar (Calistoga):</div>
+          {seed.almanacIndoors && (
+            <div><span className="text-gray-500">Start Indoors:</span> {seed.almanacIndoors}</div>
+          )}
+          {seed.almanacTransplant && (
+            <div><span className="text-gray-500">Transplant:</span> {seed.almanacTransplant}</div>
+          )}
+          {seed.almanacDirectSow && (
+            <div><span className="text-gray-500">Direct Sow:</span> {seed.almanacDirectSow}</div>
+          )}
+          {seed.almanacLastPlanting && (
+            <div><span className="text-gray-500">Last Planting:</span> {seed.almanacLastPlanting}</div>
+          )}
+          {!seed.almanacIndoors && !seed.almanacTransplant && !seed.almanacDirectSow && (
+            <>
+              <div><span className="text-gray-500">Outdoors:</span> {seed.sowTimeOutside}</div>
+              <div><span className="text-gray-500">Indoors:</span> {seed.insideStartTime}</div>
+            </>
+          )}
         </div>
 
         <div className="border-t pt-2 mt-2">

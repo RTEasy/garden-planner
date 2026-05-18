@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
 import { useGardenLocation } from './useGardenLocation';
 import { seedCatalog } from '../data/seedCatalog';
-import { parseTimingString, getPlantingStatus, DateRange } from '../utils/dateCalculations';
+import { parseTimingString, parseAlmanacDateRange, DateRange, getPlantingStatus } from '../utils/dateCalculations';
 import { Seed } from '../types';
 
 export interface InSeasonSeed {
   seed: Seed;
-  action: 'start indoors' | 'direct sow';
+  action: 'start indoors' | 'direct sow' | 'transplant';
   dateRange: DateRange;
   status: 'active' | 'upcoming';
 }
@@ -24,8 +24,10 @@ export function useInSeason() {
     const results: InSeasonSeed[] = [];
 
     for (const seed of seedCatalog) {
-      // Check indoor start timing
-      const indoorRange = parseTimingString(seed.insideStartTime, lastFrost, firstFrost);
+      // Check indoor start timing (prefer Almanac)
+      const indoorRange = parseAlmanacDateRange(seed.almanacIndoors) ||
+        parseTimingString(seed.insideStartTime, lastFrost, firstFrost);
+
       if (indoorRange) {
         const status = getPlantingStatus(indoorRange);
         if (status === 'active' || status === 'upcoming') {
@@ -38,15 +40,31 @@ export function useInSeason() {
         }
       }
 
-      // Check outdoor sow timing
-      const outdoorRange = parseTimingString(seed.sowTimeOutside, lastFrost, firstFrost);
-      if (outdoorRange) {
-        const status = getPlantingStatus(outdoorRange);
+      // Check transplant timing
+      const transplantRange = parseAlmanacDateRange(seed.almanacTransplant);
+      if (transplantRange) {
+        const status = getPlantingStatus(transplantRange);
+        if (status === 'active' || status === 'upcoming') {
+          results.push({
+            seed,
+            action: 'transplant',
+            dateRange: transplantRange,
+            status,
+          });
+        }
+      }
+
+      // Check direct sow timing (prefer Almanac)
+      const directSowRange = parseAlmanacDateRange(seed.almanacDirectSow) ||
+        (seed.insideStartTime === 'not recommended' ? parseTimingString(seed.sowTimeOutside, lastFrost, firstFrost) : null);
+
+      if (directSowRange) {
+        const status = getPlantingStatus(directSowRange);
         if (status === 'active' || status === 'upcoming') {
           results.push({
             seed,
             action: 'direct sow',
-            dateRange: outdoorRange,
+            dateRange: directSowRange,
             status,
           });
         }

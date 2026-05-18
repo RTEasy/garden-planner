@@ -15,8 +15,14 @@ export interface Seed {
   spacing: string;
   seedQuantityPerSpace: number | string;
   depth: string;
+  // Legacy relative timing (used as fallback)
   sowTimeOutside: string;
   insideStartTime: string;
+  // Almanac-style specific date ranges (for Calistoga, CA - last frost Mar 25)
+  almanacIndoors?: string;      // e.g., "Jan 27-Feb 10"
+  almanacTransplant?: string;   // e.g., "Apr 8-15"
+  almanacDirectSow?: string;    // e.g., "Feb 24-Mar 11"
+  almanacLastPlanting?: string; // e.g., "Apr 8"
   growHeight: string;
   growWidth: string;
   germinationInstructions: string;

@@ -5,6 +5,80 @@ export interface DateRange {
   end: Date;
 }
 
+// Month name to number mapping
+const monthMap: Record<string, number> = {
+  jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+  jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
+};
+
+/**
+ * Parse Almanac date strings like "Jan 27-Feb 10", "Apr 8-15", "Mar 25"
+ * Returns a DateRange for the current planting year
+ */
+export function parseAlmanacDateRange(dateStr: string | undefined): DateRange | null {
+  if (!dateStr) return null;
+
+  const currentYear = new Date().getFullYear();
+  const str = dateStr.toLowerCase().trim();
+
+  // Pattern: "jan 27-feb 10" (different months)
+  const diffMonthMatch = str.match(/([a-z]{3})\s*(\d{1,2})\s*-\s*([a-z]{3})\s*(\d{1,2})/);
+  if (diffMonthMatch) {
+    const startMonth = monthMap[diffMonthMatch[1]];
+    const startDay = parseInt(diffMonthMatch[2]);
+    const endMonth = monthMap[diffMonthMatch[3]];
+    const endDay = parseInt(diffMonthMatch[4]);
+
+    let startYear = currentYear;
+    let endYear = currentYear;
+
+    // Handle year boundary (Dec-Jan)
+    if (startMonth > endMonth) {
+      // If we're past the end date in the current year, use next year's window
+      const today = new Date();
+      if (today.getMonth() > endMonth || (today.getMonth() === endMonth && today.getDate() > endDay)) {
+        startYear = currentYear;
+        endYear = currentYear + 1;
+      } else {
+        startYear = currentYear - 1;
+        endYear = currentYear;
+      }
+    }
+
+    return {
+      start: new Date(startYear, startMonth, startDay),
+      end: new Date(endYear, endMonth, endDay),
+    };
+  }
+
+  // Pattern: "apr 8-15" (same month)
+  const sameMonthMatch = str.match(/([a-z]{3})\s*(\d{1,2})\s*-\s*(\d{1,2})/);
+  if (sameMonthMatch) {
+    const month = monthMap[sameMonthMatch[1]];
+    const startDay = parseInt(sameMonthMatch[2]);
+    const endDay = parseInt(sameMonthMatch[3]);
+
+    return {
+      start: new Date(currentYear, month, startDay),
+      end: new Date(currentYear, month, endDay),
+    };
+  }
+
+  // Pattern: "mar 25" (single date)
+  const singleMatch = str.match(/([a-z]{3})\s*(\d{1,2})$/);
+  if (singleMatch) {
+    const month = monthMap[singleMatch[1]];
+    const day = parseInt(singleMatch[2]);
+
+    return {
+      start: new Date(currentYear, month, day),
+      end: new Date(currentYear, month, day),
+    };
+  }
+
+  return null;
+}
+
 /**
  * Parse timing strings like "4 to 6 weeks before last frost" or "after last frost"
  * Returns a date range relative to the frost date
