@@ -382,6 +382,16 @@ garden-planner/
 
   **Project location**: Local Google Drive sync folder
 
+- **2026-05-18**: Added seed inventory management:
+  - Created `useInventory` hook for Supabase CRUD operations
+  - Created `AddSeedModal` component (search catalog, select seed, set packet count)
+  - Updated Inventory tab to show user's personal seed collection
+  - Added remove functionality for inventory items
+  - Dashboard now shows actual inventory count
+  - Deployed to Vercel: https://garden-planner-chi-gold.vercel.app
+
+  **Next up**: Test inventory features, then build planting schedule generator
+
 ---
 
 ## Next Steps
@@ -394,6 +404,8 @@ garden-planner/
 6. Set up PWA for phone access
 7. ~~Create TypeScript type definitions~~ DONE
 8. ~~Import seed catalog data~~ DONE
-9. Add user authentication (sign up / login)
-10. Build inventory management (add seeds to your collection)
-11. Set up garden location with frost dates
+9. ~~Add user authentication (sign up / login)~~ DONE
+10. ~~Build inventory management (add seeds to your collection)~~ DONE
+11. ~~Set up garden location with frost dates~~ DONE
+12. Build planting schedule generator based on frost dates + inventory
+13. Improve bed visualization (assign plants to squares)
