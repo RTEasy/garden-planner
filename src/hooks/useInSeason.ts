@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
+import { startOfDay, isBefore } from 'date-fns';
 import { useGardenLocation } from './useGardenLocation';
 import { seedCatalog } from '../data/seedCatalog';
-import { parseTimingString, parseAlmanacDateRange, DateRange, getPlantingStatus } from '../utils/dateCalculations';
+import { parseTimingString, parseAlmanacDateRange, parseLastPlantingDate, DateRange, getPlantingStatus } from '../utils/dateCalculations';
 import { Seed } from '../types';
 
 export interface InSeasonSeed {
@@ -69,6 +70,26 @@ export function useInSeason() {
           });
         }
       }
+    }
+
+    // Add seeds past their optimal window but still plantable before lastPlantingDate
+    const today = startOfDay(new Date());
+    for (const seed of seedCatalog) {
+      if (!seed.almanacLastPlanting) continue;
+      const lastPlanting = parseLastPlantingDate(seed.almanacLastPlanting);
+      if (!lastPlanting || isBefore(lastPlanting, today)) continue;
+
+      const alreadyActive = results.some(r => r.seed.id === seed.id && r.status === 'active');
+      if (alreadyActive) continue;
+
+      const canDirectSow = seed.insideStartTime === 'not recommended' || !!seed.almanacDirectSow;
+      const action = canDirectSow ? 'direct sow' as const : 'transplant' as const;
+      results.push({
+        seed,
+        action,
+        dateRange: { start: today, end: lastPlanting },
+        status: 'active',
+      });
     }
 
     // Sort: active first, then by start date

@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
+import { startOfDay, isBefore } from 'date-fns';
 import { useInventory } from './useInventory';
 import { useGardenLocation } from './useGardenLocation';
 import { getSeedById } from '../data/seedCatalog';
-import { parseTimingString, parseAlmanacDateRange, DateRange, getPlantingStatus } from '../utils/dateCalculations';
+import { parseTimingString, parseAlmanacDateRange, parseLastPlantingDate, DateRange, getPlantingStatus } from '../utils/dateCalculations';
 import { PlantingAction } from '../types';
 
 export interface PlantingTask {
@@ -86,6 +87,37 @@ export function useSchedule() {
           lastPlantingDate: seed.almanacLastPlanting,
         });
       }
+    }
+
+    // Generate extended tasks for seeds where optimal window passed but lastPlantingDate is still future
+    const today = startOfDay(new Date());
+    for (const item of inventory) {
+      const seed = getSeedById(item.seedId);
+      if (!seed?.almanacLastPlanting) continue;
+
+      const lastPlanting = parseLastPlantingDate(seed.almanacLastPlanting);
+      if (!lastPlanting || isBefore(lastPlanting, today)) continue;
+
+      const seedTasks = generatedTasks.filter(t => t.seedId === item.seedId);
+      const hasActiveOrUpcoming = seedTasks.some(t => t.status === 'active' || t.status === 'upcoming');
+      if (hasActiveOrUpcoming) continue;
+
+      const canDirectSow = seed.insideStartTime === 'not recommended' || !!seed.almanacDirectSow;
+      const action: PlantingAction = canDirectSow ? 'direct sow' : 'transplant';
+
+      generatedTasks.push({
+        id: `${item.seedId}-extended`,
+        seedId: item.seedId,
+        seedName: seed.commonName,
+        cultivar: seed.cultivar,
+        action,
+        dateRange: { start: today, end: lastPlanting },
+        status: 'active',
+        instructions: action === 'direct sow'
+          ? `Direct sow ${seed.commonName} outdoors now. Spacing: ${seed.spacing}, Depth: ${seed.depth}. Last chance to plant: ${seed.almanacLastPlanting}.`
+          : `Transplant ${seed.commonName} seedlings outdoors now. Spacing: ${seed.spacing}. Last chance to plant: ${seed.almanacLastPlanting}.`,
+        lastPlantingDate: seed.almanacLastPlanting,
+      });
     }
 
     // Sort by start date

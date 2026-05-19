@@ -194,6 +194,21 @@ export function isDateRangePast(range: DateRange): boolean {
 }
 
 /**
+ * Parse a last planting date string like "Sep 4", "Aug 28" into a Date
+ */
+export function parseLastPlantingDate(dateStr: string | undefined): Date | null {
+  if (!dateStr) return null;
+  const currentYear = new Date().getFullYear();
+  const str = dateStr.toLowerCase().trim();
+  const match = str.match(/([a-z]{3})\s*(\d{1,2})/);
+  if (!match) return null;
+  const month = monthMap[match[1]];
+  if (month === undefined) return null;
+  const day = parseInt(match[2]);
+  return new Date(currentYear, month, day);
+}
+
+/**
  * Format a date range for display
  */
 export function formatDateRange(range: DateRange): string {
