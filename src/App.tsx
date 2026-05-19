@@ -604,7 +604,9 @@ function App() {
         )}
 
         {activeTab === 'inventory' && (
-          <div className="space-y-4">
+          <div className="flex gap-6 items-start">
+            {/* Left: seed list */}
+            <div className="flex-1 min-w-0 space-y-4">
             {/* Header */}
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
@@ -810,11 +812,19 @@ function App() {
                       );
                     })}
                   </div>
-                  {hoveredSeed && getSeedById(hoveredSeed) && (
-                    <div className="fixed top-24 right-4 z-50 hidden lg:block">
-                      <SeedPacketCard seed={getSeedById(hoveredSeed)!} />
-                    </div>
-                  )}
+                </div>
+              )}
+            </div>
+            </div>{/* end left column */}
+
+            {/* Right: sticky detail panel */}
+            <div className="w-72 shrink-0 hidden lg:block sticky top-20">
+              {hoveredSeed && getSeedById(hoveredSeed) ? (
+                <SeedPacketCard seed={getSeedById(hoveredSeed)!} />
+              ) : (
+                <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-8 text-center">
+                  <div className="text-4xl mb-3">🌱</div>
+                  <p className="text-sm text-gray-400">Hover a seed to see its details</p>
                 </div>
               )}
             </div>
