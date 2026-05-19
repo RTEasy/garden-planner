@@ -111,45 +111,53 @@ function App() {
       <main className="max-w-6xl mx-auto px-4 py-6">
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Welcome to Your Garden</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-green-50 rounded-lg p-4">
-                  <div className="text-3xl font-bold text-green-700">3</div>
-                  <div className="text-gray-600">Raised Beds</div>
-                </div>
-                <div className="bg-blue-50 rounded-lg p-4">
-                  <div className="text-3xl font-bold text-blue-700">48</div>
-                  <div className="text-gray-600">Square Feet</div>
-                </div>
-                <div className="bg-amber-50 rounded-lg p-4">
-                  <div className="text-3xl font-bold text-amber-700">{inventory.length}</div>
-                  <div className="text-gray-600">Seeds in Inventory</div>
-                </div>
-              </div>
-            </div>
 
+            {/* Beds Overview */}
             <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h2>
-              <div className="flex flex-wrap gap-3">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-gray-800">Your Beds</h2>
                 <button
                   onClick={() => setActiveTab('beds')}
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                  className="text-sm text-green-700 font-medium hover:text-green-800"
                 >
-                  View Beds
+                  Manage →
                 </button>
-                <button
-                  onClick={() => setActiveTab('inventory')}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Manage Seeds
-                </button>
-                <button
-                  onClick={() => setActiveTab('schedule')}
-                  className="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-colors"
-                >
-                  View Schedule
-                </button>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                {([1, 2, 3] as const).map(bed => {
+                  const planted = BED_POSITIONS.filter(p => getSquare(bed, p)?.status === 'planted').length;
+                  return (
+                    <div key={bed} className="flex flex-col items-center gap-2">
+                      <div className="text-sm font-medium text-gray-600">Box {bed}</div>
+                      <div className="grid grid-cols-4 gap-1 w-full">
+                        {BED_POSITIONS.map(position => {
+                          const sq = getSquare(bed, position);
+                          const isPlanted = sq?.status === 'planted';
+                          const sfg = isPlanted ? getSeedById(sq.plantedSeedId!)?.sfgPerSquare : undefined;
+                          return (
+                            <button
+                              key={position}
+                              onClick={() => {
+                                setSelectedBed(bed);
+                                setSelectedSquare({ bed, position });
+                              }}
+                              className={`aspect-square rounded border flex items-center justify-center p-0.5 transition-colors ${
+                                isPlanted
+                                  ? 'bg-green-50 border-green-400 hover:bg-green-100'
+                                  : 'bg-amber-50 border-amber-200 hover:bg-amber-100'
+                              }`}
+                            >
+                              {isPlanted && sfg ? (
+                                <SeedDotGrid count={sfg} plantType={sq.plantedSeedType} />
+                              ) : null}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div className="text-xs text-gray-400">{planted}/16 planted</div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
