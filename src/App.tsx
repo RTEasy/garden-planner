@@ -22,6 +22,52 @@ import { differenceInDays } from 'date-fns';
 import './App.css';
 
 type Tab = 'dashboard' | 'beds' | 'inventory' | 'schedule' | 'settings';
+type InventoryFilter = 'all' | 'vegetable' | 'herb' | 'flower' | 'in_progress';
+
+function getStatusInfo(item: InventoryItemWithSeed): { label: string; color: string } {
+  const today = new Date();
+  const seed = getSeedById(item.seedId);
+
+  if (item.status === 'planted') return { label: 'In a bed', color: 'teal' };
+
+  if (item.status === 'in_process') {
+    if (item.processType === 'starting_indoors') {
+      const transplantRange = seed?.almanacTransplant ? parseAlmanacDateRange(seed.almanacTransplant) : null;
+      if (transplantRange) {
+        if (today >= transplantRange.start && today <= transplantRange.end)
+          return { label: 'Ready to transplant', color: 'green' };
+        const days = differenceInDays(transplantRange.start, today);
+        if (days > 0) return { label: `Transplant in ${days}d`, color: 'blue' };
+        return { label: 'Move to bed when ready', color: 'amber' };
+      }
+      const started = item.actionDate ? new Date(item.actionDate) : null;
+      const label = started
+        ? `Started ${started.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+        : 'Started indoors';
+      return { label, color: 'blue' };
+    }
+    if (item.processType === 'direct_sow') return { label: 'Direct sowed', color: 'green' };
+  }
+
+  if (seed?.almanacIndoors) {
+    const r = parseAlmanacDateRange(seed.almanacIndoors);
+    if (r) {
+      if (today >= r.start && today <= r.end) return { label: 'Start indoors now', color: 'blue' };
+      const days = differenceInDays(r.start, today);
+      if (days > 0 && days <= 21) return { label: `Start indoors in ${days}d`, color: 'blue' };
+    }
+  }
+  if (seed?.almanacDirectSow) {
+    const r = parseAlmanacDateRange(seed.almanacDirectSow);
+    if (r) {
+      if (today >= r.start && today <= r.end) return { label: 'Ready to sow now', color: 'green' };
+      const days = differenceInDays(r.start, today);
+      if (days > 0 && days <= 21) return { label: `Sow outside in ${days}d`, color: 'amber' };
+    }
+  }
+
+  return { label: 'In inventory', color: 'gray' };
+}
 
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
@@ -46,6 +92,8 @@ function App() {
   const { bedNames, setBedName } = useBedNames();
   const [editingBedName, setEditingBedName] = useState<1 | 2 | 3 | null>(null);
   const [editingBedNameValue, setEditingBedNameValue] = useState('');
+  const [inventoryFilter, setInventoryFilter] = useState<InventoryFilter>('all');
+  const [showCatalog, setShowCatalog] = useState(false);
 
   const startEditingBedName = (bed: 1 | 2 | 3) => {
     setEditingBedName(bed);
@@ -556,170 +604,219 @@ function App() {
         )}
 
         {activeTab === 'inventory' && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center flex-wrap gap-2">
-              <h2 className="text-xl font-semibold text-gray-800">My Seeds</h2>
-              <div className="flex gap-2">
+          <div className="space-y-4">
+            {/* Header */}
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-800">My Seeds</h2>
+                <p className="text-sm text-gray-500">{inventory.length} {inventory.length === 1 ? 'variety' : 'varieties'} in your collection</p>
+              </div>
+              <div className="flex items-center gap-2">
                 <button
                   onClick={importAllSeeds}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                  className="text-sm text-gray-600 px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
                 >
-                  Import All Seeds
-                </button>
-                <button
-                  onClick={removeAllFromInventory}
-                  className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm"
-                >
-                  Remove All
+                  Import All
                 </button>
                 <button
                   onClick={() => setShowAddSeedModal(true)}
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
                 >
                   + Add Seeds
                 </button>
               </div>
             </div>
 
+            {/* Filter tabs */}
+            {inventory.length > 0 && (() => {
+              const tabs = [
+                { key: 'all' as InventoryFilter, label: 'All', count: inventory.length },
+                { key: 'vegetable' as InventoryFilter, label: 'Vegetables', count: inventory.filter(i => i.seed.plantType === 'vegetable').length },
+                { key: 'herb' as InventoryFilter, label: 'Herbs', count: inventory.filter(i => i.seed.plantType === 'herb').length },
+                { key: 'flower' as InventoryFilter, label: 'Flowers', count: inventory.filter(i => i.seed.plantType === 'flower').length },
+                { key: 'in_progress' as InventoryFilter, label: 'In Progress', count: inventory.filter(i => i.status !== 'in_inventory').length },
+              ].filter(t => t.key === 'all' || t.count > 0);
+              return (
+                <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit">
+                  {tabs.map(tab => (
+                    <button
+                      key={tab.key}
+                      onClick={() => setInventoryFilter(tab.key)}
+                      className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                        inventoryFilter === tab.key
+                          ? 'bg-white text-gray-800 shadow-sm'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      {tab.label}
+                      {tab.key !== 'all' && (
+                        <span className="ml-1.5 text-xs text-gray-400">{tab.count}</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
+
             {inventoryLoading ? (
-              <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
-                Loading...
-              </div>
+              <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">Loading...</div>
             ) : inventory.length === 0 ? (
               <div className="bg-white rounded-lg shadow p-8 text-center">
                 <p className="text-gray-600 mb-4">No seeds yet. Add seeds you own to track them here.</p>
                 <div className="flex gap-3 justify-center">
-                  <button
-                    onClick={importAllSeeds}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                  >
+                  <button onClick={importAllSeeds} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
                     Import All Catalog Seeds
                   </button>
-                  <button
-                    onClick={() => setShowAddSeedModal(true)}
-                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-                  >
+                  <button onClick={() => setShowAddSeedModal(true)} className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
                     Add Seeds Manually
                   </button>
                 </div>
               </div>
-            ) : (
-              <div className="bg-white rounded-lg shadow overflow-hidden overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="text-left px-4 py-3 text-gray-500 font-medium text-sm">Name</th>
-                      <th className="text-left px-4 py-3 text-gray-500 font-medium text-sm">Cultivar</th>
-                      <th className="text-left px-4 py-3 text-gray-500 font-medium text-sm hidden sm:table-cell">Type</th>
-                      <th className="text-left px-4 py-3 text-gray-500 font-medium text-sm">Status</th>
-                      <th className="text-left px-4 py-3 text-gray-500 font-medium text-sm">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {inventory.map(item => (
-                      <tr key={item.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 font-medium text-gray-800 capitalize">{item.seed.commonName}</td>
-                        <td className="px-4 py-3 text-gray-600 text-sm">{item.seed.cultivar}</td>
-                        <td className="px-4 py-3 hidden sm:table-cell">
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                            item.seed.plantType === 'vegetable' ? 'bg-green-100 text-green-700' :
-                            item.seed.plantType === 'herb' ? 'bg-purple-100 text-purple-700' :
-                            'bg-pink-100 text-pink-700'
-                          }`}>{item.seed.plantType}</span>
-                        </td>
-                        <td className="px-4 py-3">
-                          {item.status === 'in_inventory' && (
-                            <span className="text-xs text-gray-500">In inventory</span>
-                          )}
-                          {item.status === 'in_process' && item.processType === 'starting_indoors' && (
-                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">Starting indoors</span>
-                          )}
-                          {item.status === 'in_process' && item.processType === 'direct_sow' && (
-                            <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">Direct sowed</span>
-                          )}
-                          {item.status === 'planted' && (
-                            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">Planted</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-3">
+            ) : (() => {
+              const filteredInventory = inventoryFilter === 'all'
+                ? inventory
+                : inventoryFilter === 'in_progress'
+                  ? inventory.filter(i => i.status !== 'in_inventory')
+                  : inventory.filter(i => i.seed.plantType === inventoryFilter);
+              const statusColors: Record<string, string> = {
+                green: 'bg-green-100 text-green-700',
+                teal: 'bg-teal-100 text-teal-700',
+                blue: 'bg-blue-100 text-blue-700',
+                amber: 'bg-amber-100 text-amber-700',
+                gray: 'bg-gray-100 text-gray-500',
+              };
+              return (
+                <>
+                  <div className="bg-white rounded-xl shadow divide-y divide-gray-100">
+                    {filteredInventory.length === 0 ? (
+                      <div className="p-8 text-center text-gray-400 text-sm">No seeds in this category.</div>
+                    ) : filteredInventory.map(item => {
+                      const statusInfo = getStatusInfo(item);
+                      return (
+                        <div
+                          key={item.id}
+                          className="px-4 py-3.5 flex items-center gap-3 hover:bg-gray-50 transition-colors"
+                          onMouseEnter={() => setHoveredSeed(item.seedId)}
+                          onMouseLeave={() => setHoveredSeed(null)}
+                        >
+                          <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                            item.seed.plantType === 'vegetable' ? 'bg-green-500' :
+                            item.seed.plantType === 'herb' ? 'bg-purple-400' : 'bg-pink-400'
+                          }`} />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-baseline gap-2">
+                              <span className="font-medium text-gray-800 capitalize">{item.seed.commonName}</span>
+                              <span className="text-xs text-gray-400">{item.seed.cultivar}</span>
+                            </div>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                                item.seed.plantType === 'vegetable' ? 'bg-green-50 text-green-600' :
+                                item.seed.plantType === 'herb' ? 'bg-purple-50 text-purple-600' :
+                                'bg-pink-50 text-pink-600'
+                              }`}>{item.seed.plantType}</span>
+                              {item.seed.sfgPerSquare && (
+                                <span className="text-xs text-gray-400">{item.seed.sfgPerSquare}/sq ft</span>
+                              )}
+                            </div>
+                          </div>
+                          <span className={`text-xs px-2.5 py-1 rounded-full font-medium shrink-0 ${statusColors[statusInfo.color] ?? statusColors.gray}`}>
+                            {statusInfo.label}
+                          </span>
+                          <div className="flex items-center gap-3 shrink-0">
                             {item.status === 'in_inventory' && (
-                              <button
-                                onClick={() => openLifecycleModal(item)}
-                                className="text-sm text-green-700 font-medium hover:text-green-800"
-                              >
-                                Start Indoors
-                              </button>
-                            )}
-                            {item.status === 'in_inventory' && (
-                              <button
-                                onClick={() => removeFromInventory(item.id)}
-                                className="text-sm text-red-500 hover:text-red-600"
-                              >
-                                Remove
-                              </button>
+                              <>
+                                <button
+                                  onClick={() => openLifecycleModal(item)}
+                                  className="text-xs text-green-700 font-medium hover:text-green-800 whitespace-nowrap"
+                                >
+                                  Start Indoors
+                                </button>
+                                <button
+                                  onClick={() => removeFromInventory(item.id)}
+                                  className="text-gray-300 hover:text-red-400 transition-colors"
+                                  title="Remove"
+                                >
+                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              </>
                             )}
                           </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <div className="px-4 py-3 bg-gray-50 text-gray-400 text-sm">
-                  {inventory.length} {inventory.length === 1 ? 'variety' : 'varieties'} · To direct sow, go to the Beds tab and click a square.
-                </div>
-              </div>
-            )}
+                        </div>
+                      );
+                    })}
+                  </div>
 
-            {/* Seed Catalog Reference */}
-            <div className="mt-8">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Seed Catalog</h3>
-              <p className="text-sm text-gray-500 mb-4">Hover over a seed to view packet details</p>
-              <div className="relative">
-                <div className="bg-white rounded-lg shadow overflow-hidden">
-                  <table className="w-full">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="text-left px-4 py-3 text-gray-600 font-medium">Name</th>
-                        <th className="text-left px-4 py-3 text-gray-600 font-medium">Cultivar</th>
-                        <th className="text-left px-4 py-3 text-gray-600 font-medium">Type</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {seedCatalog.map((seed) => (
-                        <tr
+                  <div className="flex justify-between items-center text-xs text-gray-400 px-1">
+                    <span>Direct sow: go to the Beds tab and click a square.</span>
+                    <button
+                      onClick={removeAllFromInventory}
+                      className="text-red-300 hover:text-red-500 transition-colors"
+                    >
+                      Remove all seeds
+                    </button>
+                  </div>
+                </>
+              );
+            })()}
+
+            {/* Browse Catalog */}
+            <div className="border-t border-gray-100 pt-4">
+              <button
+                onClick={() => setShowCatalog(prev => !prev)}
+                className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 font-medium"
+              >
+                <span className="text-gray-400">{showCatalog ? '▾' : '▸'}</span>
+                Browse seed catalog
+                <span className="text-gray-400 font-normal text-xs">· {seedCatalog.length} varieties</span>
+              </button>
+              {showCatalog && (
+                <div className="mt-3 relative">
+                  <div className="bg-white rounded-xl shadow divide-y divide-gray-100">
+                    {seedCatalog.map(seed => {
+                      const inInventory = inventory.some(i => i.seedId === seed.id);
+                      return (
+                        <div
                           key={seed.id}
-                          className="hover:bg-amber-50 cursor-pointer transition-colors"
+                          className="px-4 py-3 flex items-center gap-3 hover:bg-amber-50 transition-colors"
                           onMouseEnter={() => setHoveredSeed(seed.id)}
                           onMouseLeave={() => setHoveredSeed(null)}
                         >
-                          <td className="px-4 py-3 font-medium text-gray-800 capitalize">{seed.commonName}</td>
-                          <td className="px-4 py-3 text-gray-600">{seed.cultivar}</td>
-                          <td className="px-4 py-3">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              seed.plantType === 'vegetable' ? 'bg-green-100 text-green-700' :
-                              seed.plantType === 'herb' ? 'bg-purple-100 text-purple-700' :
-                              'bg-pink-100 text-pink-700'
-                            }`}>
-                              {seed.plantType}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  <div className="px-4 py-3 bg-gray-50 text-gray-500 text-sm">
-                    {seedCatalog.length} seed varieties available
+                          <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                            seed.plantType === 'vegetable' ? 'bg-green-500' :
+                            seed.plantType === 'herb' ? 'bg-purple-400' : 'bg-pink-400'
+                          }`} />
+                          <div className="flex-1 min-w-0">
+                            <span className="font-medium text-gray-800 capitalize">{seed.commonName}</span>
+                            <span className="text-xs text-gray-400 ml-2">{seed.cultivar}</span>
+                          </div>
+                          <span className={`text-xs px-1.5 py-0.5 rounded font-medium shrink-0 ${
+                            seed.plantType === 'vegetable' ? 'bg-green-50 text-green-600' :
+                            seed.plantType === 'herb' ? 'bg-purple-50 text-purple-600' :
+                            'bg-pink-50 text-pink-600'
+                          }`}>{seed.plantType}</span>
+                          {inInventory ? (
+                            <span className="text-xs text-gray-400 shrink-0">In collection</span>
+                          ) : (
+                            <button
+                              onClick={() => addToInventory(seed.id, 1)}
+                              className="text-xs text-green-700 font-medium hover:text-green-800 shrink-0"
+                            >
+                              + Add
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
+                  {hoveredSeed && getSeedById(hoveredSeed) && (
+                    <div className="fixed top-24 right-4 z-50 hidden lg:block">
+                      <SeedPacketCard seed={getSeedById(hoveredSeed)!} />
+                    </div>
+                  )}
                 </div>
-
-                {/* Seed Packet Tooltip - Fixed position to stay in view */}
-                {hoveredSeed && getSeedById(hoveredSeed) && (
-                  <div className="fixed top-24 right-4 z-50 hidden lg:block">
-                    <SeedPacketCard seed={getSeedById(hoveredSeed)!} />
-                  </div>
-                )}
-              </div>
+              )}
             </div>
           </div>
         )}
