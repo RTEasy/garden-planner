@@ -13,6 +13,7 @@ import { AddSeedModal } from './components/inventory/AddSeedModal';
 import { SeedPacketCard } from './components/inventory/SeedPacketCard';
 import { SeedLifecycleModal } from './components/inventory/SeedLifecycleModal';
 import { BedSquareModal } from './components/beds/BedSquareModal';
+import { SeedDotGrid } from './components/beds/SeedDotGrid';
 import { ProcessType } from './types';
 import { parseAlmanacDateRange, formatDateRange } from './utils/dateCalculations';
 import { differenceInDays } from 'date-fns';
@@ -332,18 +333,23 @@ function App() {
                     <button
                       key={position}
                       onClick={() => setSelectedSquare({ bed: selectedBed, position })}
-                      className={`aspect-square rounded-lg border-2 flex flex-col items-center justify-center p-1 transition-colors text-center ${
+                      className={`aspect-square rounded-lg border-2 flex flex-col items-center justify-center p-1.5 transition-colors text-center ${
                         planted
-                          ? 'bg-green-100 border-green-400 hover:bg-green-200'
+                          ? 'bg-green-50 border-green-400 hover:bg-green-100'
                           : 'bg-amber-50 border-amber-200 hover:bg-amber-100'
                       }`}
                     >
                       {planted ? (
                         <>
-                          <span className="text-xs font-medium text-green-800 capitalize leading-tight line-clamp-2">
+                          {(() => {
+                            const sfg = getSeedById(sq.plantedSeedId!)?.sfgPerSquare;
+                            return sfg ? (
+                              <SeedDotGrid count={sfg} plantType={sq.plantedSeedType} />
+                            ) : null;
+                          })()}
+                          <span className="text-[10px] font-medium text-green-800 capitalize leading-tight mt-1 line-clamp-1">
                             {sq.plantedSeedName}
                           </span>
-                          <span className="text-xs text-gray-400 mt-0.5">{position}</span>
                         </>
                       ) : (
                         <span className="text-sm text-amber-600 font-medium">{position}</span>
