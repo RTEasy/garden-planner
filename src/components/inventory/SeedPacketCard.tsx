@@ -51,10 +51,12 @@ export function SeedPacketCard({ seed }: SeedPacketCardProps) {
             <span className="font-semibold text-gray-600">Depth:</span>
             <span className="ml-1">{seed.depth}</span>
           </div>
-          <div>
-            <span className="font-semibold text-gray-600">Seeds/Space:</span>
-            <span className="ml-1">{seed.seedQuantityPerSpace}</span>
-          </div>
+          {seed.sfgPerSquare && (
+            <div className="col-span-2 bg-green-50 rounded px-2 py-1 flex items-center gap-1">
+              <span className="font-semibold text-green-700">SFG:</span>
+              <span className="text-green-800 font-medium">{seed.sfgPerSquare} per square foot</span>
+            </div>
+          )}
           <div>
             <span className="font-semibold text-gray-600">Height:</span>
             <span className="ml-1">{seed.growHeight}</span>

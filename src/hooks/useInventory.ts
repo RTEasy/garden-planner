@@ -23,6 +23,7 @@ export interface InventoryItemWithSeed extends InventoryItem {
     cultivar: string;
     plantType: string;
     spacing: string;
+    sfgPerSquare?: number;
   };
 }
 
@@ -84,6 +85,7 @@ export function useInventory() {
           cultivar: item.seed_catalog?.cultivar || '',
           plantType: item.seed_catalog?.plant_type || '',
           spacing: item.seed_catalog?.spacing || '',
+          sfgPerSquare: seedCatalog.find(s => s.id === item.seed_id)?.sfgPerSquare,
         },
       }));
 

@@ -31,6 +31,7 @@ export interface Seed {
   animalResistance: string;
   bloom: string;
   seedInventoryMg: number;
+  sfgPerSquare?: number; // Square Foot Gardening: plants per square foot
 }
 
 export interface InventoryItem {

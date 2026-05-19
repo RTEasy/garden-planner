@@ -109,8 +109,17 @@ export function BedSquareModal({
                   : 'border-transparent hover:bg-gray-50'
               }`}
             >
-              <span className="font-medium capitalize">{item.seed.commonName}</span>
-              <span className="text-gray-400 ml-1.5 text-xs">{item.seed.cultivar}</span>
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="font-medium capitalize">{item.seed.commonName}</span>
+                  <span className="text-gray-400 ml-1.5 text-xs">{item.seed.cultivar}</span>
+                </div>
+                {item.seed.sfgPerSquare && (
+                  <span className="text-xs text-green-700 bg-green-50 px-1.5 py-0.5 rounded font-medium ml-2 shrink-0">
+                    {item.seed.sfgPerSquare}/sq ft
+                  </span>
+                )}
+              </div>
             </button>
           ))}
         </div>
