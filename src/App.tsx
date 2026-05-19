@@ -8,6 +8,7 @@ import { useGardenLocation } from './hooks/useGardenLocation';
 import { useInventory, InventoryItemWithSeed } from './hooks/useInventory';
 import { useInSeason } from './hooks/useInSeason';
 import { useBedSquares } from './hooks/useBedSquares';
+import { useBedNames } from './hooks/useBedNames';
 import { AddSeedModal } from './components/inventory/AddSeedModal';
 import { SeedPacketCard } from './components/inventory/SeedPacketCard';
 import { SeedLifecycleModal } from './components/inventory/SeedLifecycleModal';
@@ -42,14 +43,23 @@ function App() {
   };
   const { activeSeeds, upcomingSeeds } = useInSeason();
   const { bedSquares, getSquare, plantSquare, clearSquare, advanceStage } = useBedSquares();
+  const { bedNames, setBedName } = useBedNames();
+  const [editingBedName, setEditingBedName] = useState<1 | 2 | 3 | null>(null);
+  const [editingBedNameValue, setEditingBedNameValue] = useState('');
+
+  const startEditingBedName = (bed: 1 | 2 | 3) => {
+    setEditingBedName(bed);
+    setEditingBedNameValue(bedNames[bed]);
+  };
+
+  const commitBedName = () => {
+    if (editingBedName) {
+      setBedName(editingBedName, editingBedNameValue);
+      setEditingBedName(null);
+    }
+  };
 
   const indoorStarts = inventory.filter(i => i.status === 'in_process' && i.processType === 'starting_indoors');
-
-  const bedNames = {
-    1: 'Vegetables & Herbs',
-    2: 'Cucumbers & Alliums',
-    3: 'Cut Flowers & Herbs',
-  };
 
   // Show loading spinner while checking auth
   if (loading) {
@@ -262,7 +272,13 @@ function App() {
                   const planted = BED_POSITIONS.filter(p => getSquare(bed, p)?.status === 'planted').length;
                   return (
                     <div key={bed} className="flex flex-col items-center gap-2">
-                      <div className="text-sm font-medium text-gray-600">Box {bed}</div>
+                      <button
+                        onClick={() => { setActiveTab('beds'); setSelectedBed(bed); startEditingBedName(bed); }}
+                        className="text-sm font-medium text-gray-600 hover:text-green-700 truncate max-w-full"
+                        title="Click to rename"
+                      >
+                        {bedNames[bed]}
+                      </button>
                       <div className="grid grid-cols-4 gap-1 w-full">
                         {BED_POSITIONS.map(position => {
                           const sq = getSquare(bed, position);
@@ -472,9 +488,28 @@ function App() {
             </div>
 
             <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-2">
-                Box {selectedBed}: {bedNames[selectedBed]}
-              </h2>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xl font-semibold text-gray-800">Box {selectedBed}:</span>
+                {editingBedName === selectedBed ? (
+                  <input
+                    autoFocus
+                    value={editingBedNameValue}
+                    onChange={e => setEditingBedNameValue(e.target.value)}
+                    onBlur={commitBedName}
+                    onKeyDown={e => { if (e.key === 'Enter') commitBedName(); if (e.key === 'Escape') setEditingBedName(null); }}
+                    className="text-xl font-semibold text-gray-800 border-b-2 border-green-500 outline-none bg-transparent"
+                  />
+                ) : (
+                  <button
+                    onClick={() => startEditingBedName(selectedBed)}
+                    className="text-xl font-semibold text-gray-800 hover:text-green-700 group flex items-center gap-1"
+                    title="Click to rename"
+                  >
+                    {bedNames[selectedBed]}
+                    <span className="text-sm text-gray-400 group-hover:text-green-600 font-normal">✎</span>
+                  </button>
+                )}
+              </div>
               <p className="text-gray-500 text-sm mb-4">4' x 4' raised bed (16 square feet)</p>
 
               {/* Bed Grid */}
