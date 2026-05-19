@@ -1,20 +1,40 @@
 import { useState } from 'react';
 import { ProcessType } from '../../types';
+import { parseAlmanacDateRange, formatDateRange } from '../../utils/dateCalculations';
 
 interface Props {
   isOpen: boolean;
   seedName: string;
   cultivar: string;
   defaultProcessType?: ProcessType;
+  almanacIndoors?: string;
+  almanacDirectSow?: string;
+  almanacTransplant?: string;
   onConfirm: (processType: ProcessType, actionDate: string) => void;
   onClose: () => void;
 }
 
-export function SeedLifecycleModal({ isOpen, seedName, cultivar, defaultProcessType, onConfirm, onClose }: Props) {
+export function SeedLifecycleModal({
+  isOpen, seedName, cultivar, defaultProcessType,
+  almanacIndoors, almanacDirectSow, almanacTransplant,
+  onConfirm, onClose,
+}: Props) {
   const [processType, setProcessType] = useState<ProcessType>(defaultProcessType || 'starting_indoors');
   const [actionDate, setActionDate] = useState(new Date().toISOString().split('T')[0]);
 
   if (!isOpen) return null;
+
+  const indoorsRange = parseAlmanacDateRange(almanacIndoors);
+  const directSowRange = parseAlmanacDateRange(almanacDirectSow);
+  const transplantRange = parseAlmanacDateRange(almanacTransplant);
+
+  const hint = processType === 'starting_indoors'
+    ? indoorsRange ? `Recommended window: ${formatDateRange(indoorsRange)}` : null
+    : directSowRange ? `Recommended window: ${formatDateRange(directSowRange)}` : null;
+
+  const transplantHint = processType === 'starting_indoors' && transplantRange
+    ? `Transplant window: ${formatDateRange(transplantRange)}`
+    : null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -52,6 +72,14 @@ export function SeedLifecycleModal({ isOpen, seedName, cultivar, defaultProcessT
               </button>
             </div>
           </div>
+
+          {/* Date hints */}
+          {(hint || transplantHint) && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 space-y-1">
+              {hint && <p className="text-xs text-blue-800"><span className="font-medium">For Calistoga:</span> {hint}</p>}
+              {transplantHint && <p className="text-xs text-blue-700">{transplantHint}</p>}
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>

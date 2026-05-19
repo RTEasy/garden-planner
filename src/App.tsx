@@ -168,6 +168,37 @@ function App() {
             {/* Right — main dashboard content */}
             <div className="flex-1 min-w-0 space-y-6">
 
+            {/* Today's Focus */}
+            {(activeSeeds.length > 0 || upcomingSeeds.length > 0) && (
+              <div className={`rounded-lg p-5 border-2 ${activeSeeds.length > 0 ? 'bg-green-50 border-green-400' : 'bg-amber-50 border-amber-300'}`}>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className={`w-2.5 h-2.5 rounded-full ${activeSeeds.length > 0 ? 'bg-green-500' : 'bg-amber-400'}`} />
+                  <h2 className={`font-semibold text-sm uppercase tracking-wide ${activeSeeds.length > 0 ? 'text-green-800' : 'text-amber-800'}`}>
+                    {activeSeeds.length > 0 ? 'Ready to act now' : 'Coming up soon'}
+                  </h2>
+                </div>
+                <div className="space-y-2">
+                  {(activeSeeds.length > 0 ? activeSeeds : upcomingSeeds).slice(0, 3).map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className={`shrink-0 text-xs font-medium px-2 py-0.5 rounded-full ${
+                          item.action === 'start indoors' ? 'bg-blue-100 text-blue-700' :
+                          item.action === 'transplant' ? 'bg-violet-100 text-violet-700' :
+                          'bg-green-100 text-green-700'
+                        }`}>{item.action}</span>
+                        <span className="text-sm font-medium text-gray-800 capitalize truncate">{item.seed.commonName}</span>
+                        <span className="text-xs text-gray-500 truncate hidden sm:block">{item.seed.cultivar}</span>
+                      </div>
+                      <span className="text-xs text-gray-500 shrink-0">{formatDateRange(item.dateRange)}</span>
+                    </div>
+                  ))}
+                </div>
+                {activeSeeds.length > 3 && (
+                  <p className="text-xs text-green-700 mt-2">+{activeSeeds.length - 3} more ready — check the Schedule tab</p>
+                )}
+              </div>
+            )}
+
             {/* Beds Overview */}
             <div className="bg-white rounded-lg shadow p-6">
               <div className="flex items-center justify-between mb-4">
@@ -648,14 +679,22 @@ function App() {
       />
 
       {/* Seed Lifecycle Modal */}
-      <SeedLifecycleModal
-        isOpen={!!lifecycleTarget}
-        seedName={lifecycleTarget?.seed.commonName || ''}
-        cultivar={lifecycleTarget?.seed.cultivar || ''}
-        defaultProcessType="starting_indoors"
-        onConfirm={handleLifecycleConfirm}
-        onClose={() => setLifecycleTarget(null)}
-      />
+      {(() => {
+        const fullSeed = lifecycleTarget ? getSeedById(lifecycleTarget.seedId) : undefined;
+        return (
+          <SeedLifecycleModal
+            isOpen={!!lifecycleTarget}
+            seedName={lifecycleTarget?.seed.commonName || ''}
+            cultivar={lifecycleTarget?.seed.cultivar || ''}
+            defaultProcessType="starting_indoors"
+            almanacIndoors={fullSeed?.almanacIndoors}
+            almanacDirectSow={fullSeed?.almanacDirectSow}
+            almanacTransplant={fullSeed?.almanacTransplant}
+            onConfirm={handleLifecycleConfirm}
+            onClose={() => setLifecycleTarget(null)}
+          />
+        );
+      })()}
 
       {/* Bed Square Modal */}
       {selectedSquare && (() => {

@@ -72,6 +72,16 @@ function getBars(item: InventoryItemWithSeed): Bar[] {
   return bars;
 }
 
+// Fixed vertical lane per bar type so bars never overlap
+const LANE_TOP: Record<string, number> = {
+  'Start Indoors': 2,
+  'Transplant':    10,
+  'Sow Outside':   18,
+  'Harvest':       2,   // temporally separate from Start Indoors
+  'Bloom':         10,  // temporally separate from Transplant
+};
+const LANE_H = 7;
+
 function SeedRow({ item, todayPct }: { item: InventoryItemWithSeed; todayPct: number }) {
   const bars = getBars(item);
 
@@ -81,12 +91,14 @@ function SeedRow({ item, todayPct }: { item: InventoryItemWithSeed; todayPct: nu
         <div className="text-xs font-medium text-gray-700 capitalize truncate">{item.seed.commonName}</div>
         <div className="text-[10px] text-gray-400 truncate">{item.seed.cultivar}</div>
       </div>
-      <div className="flex-1 relative h-7 group-hover:bg-gray-50 rounded">
+      <div className="flex-1 relative h-8 group-hover:bg-gray-50 rounded">
         {bars.map((bar, i) => (
           <div
             key={i}
-            className={`absolute top-1.5 h-4 rounded-sm opacity-75 ${bar.color}`}
+            className={`absolute rounded-sm opacity-75 ${bar.color}`}
             style={{
+              top: `${LANE_TOP[bar.label] ?? 2}px`,
+              height: `${LANE_H}px`,
               left: `${bar.startPct}%`,
               width: `${Math.max(bar.endPct - bar.startPct, 0.8)}%`,
             }}
