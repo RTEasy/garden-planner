@@ -14,6 +14,7 @@ import { SeedPacketCard } from './components/inventory/SeedPacketCard';
 import { SeedLifecycleModal } from './components/inventory/SeedLifecycleModal';
 import { BedSquareModal } from './components/beds/BedSquareModal';
 import { SeedDotGrid } from './components/beds/SeedDotGrid';
+import { ScheduleTimeline } from './components/schedule/ScheduleTimeline';
 import { ProcessType } from './types';
 import { parseAlmanacDateRange, formatDateRange } from './utils/dateCalculations';
 import { differenceInDays } from 'date-fns';
@@ -593,156 +594,12 @@ function App() {
         )}
 
         {activeTab === 'schedule' && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold text-gray-800">Planting Schedule</h2>
-              {location?.lastFrostDate && (
-                <span className="text-sm text-gray-500">
-                  Last frost: {new Date(location.lastFrostDate).toLocaleDateString()}
-                </span>
-              )}
+              <h2 className="text-xl font-semibold text-gray-800">Planting Calendar</h2>
+              <span className="text-xs text-gray-400">Calistoga, CA · Last frost Mar 25 · First frost Nov 13</span>
             </div>
-
-            {!hasLocation ? (
-              <div className="bg-white rounded-lg shadow p-6">
-                <div className="text-center py-8">
-                  <p className="text-lg text-gray-800">Set up your garden location first</p>
-                  <p className="text-gray-500 text-sm mt-2">
-                    We need your frost dates to generate a personalized planting schedule.
-                  </p>
-                  <button
-                    onClick={() => setActiveTab('settings')}
-                    className="mt-4 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-                  >
-                    Set Location
-                  </button>
-                </div>
-              </div>
-            ) : !hasInventory ? (
-              <div className="bg-white rounded-lg shadow p-6">
-                <div className="text-center py-8">
-                  <p className="text-lg text-gray-800">Add seeds to your inventory</p>
-                  <p className="text-gray-500 text-sm mt-2">
-                    Your schedule will be generated based on the seeds you have.
-                  </p>
-                  <button
-                    onClick={() => setActiveTab('inventory')}
-                    className="mt-4 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-                  >
-                    Add Seeds
-                  </button>
-                </div>
-              </div>
-            ) : scheduleLoading ? (
-              <div className="bg-white rounded-lg shadow p-6 text-center text-gray-500">
-                Loading schedule...
-              </div>
-            ) : (
-              <>
-                {/* Active Tasks - Plant Now */}
-                {activeTasks.length > 0 && (
-                  <div>
-                    <h3 className="text-lg font-semibold text-green-700 mb-3 flex items-center gap-2">
-                      <span className="w-3 h-3 bg-green-500 rounded-full"></span>
-                      Plant Now
-                    </h3>
-                    <div className="space-y-3">
-                      {activeTasks.map((task) => {
-                        const matchingItem = inventory.find(i => i.seedId === task.seedId && i.status === 'in_inventory');
-                        const inProgressItem = inventory.find(i => i.seedId === task.seedId && i.status === 'in_process');
-                        return (
-                          <div key={task.id} className="bg-green-50 border border-green-200 rounded-lg p-4">
-                            <div className="flex justify-between items-start gap-2 flex-wrap">
-                              <div>
-                                <span className="font-medium text-gray-800 capitalize">{task.seedName}</span>
-                                <span className="text-gray-500 ml-2">({task.cultivar})</span>
-                              </div>
-                              <div className="flex items-center gap-2 flex-shrink-0">
-                                {inProgressItem ? (
-                                  <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full">
-                                    {inProgressItem.processType === 'starting_indoors' ? 'Starting indoors' : 'Direct sowed'} {inProgressItem.actionDate ? `on ${new Date(inProgressItem.actionDate).toLocaleDateString()}` : ''}
-                                  </span>
-                                ) : matchingItem ? (
-                                  <button
-                                    onClick={() => openLifecycleModal(matchingItem)}
-                                    className="text-xs bg-green-600 text-white px-3 py-1 rounded-full hover:bg-green-700 transition-colors"
-                                  >
-                                    I started this
-                                  </button>
-                                ) : null}
-                                <span className="text-sm bg-green-100 text-green-700 px-2 py-1 rounded">
-                                  {task.action}
-                                </span>
-                              </div>
-                            </div>
-                            <p className="text-sm text-gray-600 mt-1">{formatDateRange(task.dateRange)}</p>
-                            <p className="text-sm text-gray-500 mt-2">{task.instructions}</p>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* Upcoming Tasks - Next 4 Weeks */}
-                {upcomingTasks.length > 0 && (
-                  <div>
-                    <h3 className="text-lg font-semibold text-amber-700 mb-3 flex items-center gap-2">
-                      <span className="w-3 h-3 bg-amber-500 rounded-full"></span>
-                      Coming Up (Next 4 Weeks)
-                    </h3>
-                    <div className="space-y-3">
-                      {upcomingTasks.map((task) => (
-                        <div key={task.id} className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <span className="font-medium text-gray-800 capitalize">{task.seedName}</span>
-                              <span className="text-gray-500 ml-2">({task.cultivar})</span>
-                            </div>
-                            <span className="text-sm bg-amber-100 text-amber-700 px-2 py-1 rounded">
-                              {task.action}
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-600 mt-1">{formatDateRange(task.dateRange)}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Future Tasks */}
-                {futureTasks.length > 0 && (
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-600 mb-3 flex items-center gap-2">
-                      <span className="w-3 h-3 bg-gray-400 rounded-full"></span>
-                      Later This Season
-                    </h3>
-                    <div className="space-y-2">
-                      {futureTasks.map((task) => (
-                        <div key={task.id} className="bg-white border border-gray-200 rounded-lg p-3">
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <span className="font-medium text-gray-700 capitalize">{task.seedName}</span>
-                              <span className="text-gray-400 ml-2 text-sm">({task.cultivar})</span>
-                            </div>
-                            <div className="text-right">
-                              <span className="text-sm text-gray-500">{task.action}</span>
-                              <p className="text-xs text-gray-400">{formatDateRange(task.dateRange)}</p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {activeTasks.length === 0 && upcomingTasks.length === 0 && futureTasks.length === 0 && (
-                  <div className="bg-white rounded-lg shadow p-6 text-center text-gray-500">
-                    No planting tasks scheduled. Your seeds may be out of season.
-                  </div>
-                )}
-              </>
-            )}
+            <ScheduleTimeline inventory={inventory} />
           </div>
         )}
 
