@@ -40,7 +40,7 @@ function App() {
     setLifecycleTarget(null);
   };
   const { activeSeeds, upcomingSeeds } = useInSeason();
-  const { getSquare, plantSquare, clearSquare } = useBedSquares();
+  const { bedSquares, getSquare, plantSquare, clearSquare, advanceStage } = useBedSquares();
 
   const indoorStarts = inventory.filter(i => i.status === 'in_process' && i.processType === 'starting_indoors');
 
@@ -168,6 +168,42 @@ function App() {
             {/* Right — main dashboard content */}
             <div className="flex-1 min-w-0 space-y-6">
 
+            {/* Onboarding checklist */}
+            {(() => {
+              const hasLocation = !!location?.lastFrostDate;
+              const hasSeeds = inventory.length > 0;
+              const hasPlanted = bedSquares.some(sq => sq.status !== 'empty');
+              if (hasLocation && hasSeeds && hasPlanted) return null;
+              const steps = [
+                { done: hasLocation, label: 'Set your location', sub: 'Get accurate planting dates for Calistoga', onClick: () => setActiveTab('settings'), cta: 'Set Location' },
+                { done: hasSeeds, label: 'Add seeds to your inventory', sub: 'Track what you have to plant', onClick: () => setActiveTab('inventory'), cta: 'Add Seeds' },
+                { done: hasPlanted, label: 'Plant your first square', sub: 'Click any square in the Beds tab', onClick: () => setActiveTab('beds'), cta: 'Go to Beds' },
+              ];
+              return (
+                <div className="bg-white rounded-lg shadow p-5 border-l-4 border-green-500">
+                  <h3 className="font-semibold text-gray-800 mb-3">Getting Started with Square Foot Gardening</h3>
+                  <div className="space-y-2">
+                    {steps.map((step, i) => (
+                      <div key={i} className={`flex items-center gap-3 p-3 rounded-lg ${step.done ? '' : 'bg-gray-50'}`}>
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${step.done ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                          {step.done ? '✓' : i + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className={`text-sm font-medium ${step.done ? 'line-through text-gray-400' : 'text-gray-800'}`}>{step.label}</div>
+                          {!step.done && <div className="text-xs text-gray-500">{step.sub}</div>}
+                        </div>
+                        {!step.done && (
+                          <button onClick={step.onClick} className="text-xs text-green-700 font-medium hover:text-green-800 shrink-0 whitespace-nowrap">
+                            {step.cta} →
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Today's Focus */}
             {(activeSeeds.length > 0 || upcomingSeeds.length > 0) && (
               <div className={`rounded-lg p-5 border-2 ${activeSeeds.length > 0 ? 'bg-green-50 border-green-400' : 'bg-amber-50 border-amber-300'}`}>
@@ -229,8 +265,13 @@ function App() {
                       <div className="grid grid-cols-4 gap-1 w-full">
                         {BED_POSITIONS.map(position => {
                           const sq = getSquare(bed, position);
-                          const isPlanted = sq?.status === 'planted';
-                          const sfg = isPlanted ? getSeedById(sq.plantedSeedId!)?.sfgPerSquare : undefined;
+                          const isOccupied = sq && sq.status !== 'empty';
+                          const sfg = isOccupied ? getSeedById(sq.plantedSeedId!)?.sfgPerSquare : undefined;
+                          const squareColor =
+                            sq?.status === 'harvesting' ? 'bg-amber-50 border-amber-400 hover:bg-amber-100' :
+                            sq?.status === 'growing'    ? 'bg-teal-50 border-teal-400 hover:bg-teal-100' :
+                            isOccupied                  ? 'bg-green-50 border-green-400 hover:bg-green-100' :
+                                                          'bg-stone-50 border-stone-200 hover:bg-stone-100';
                           return (
                             <button
                               key={position}
@@ -238,13 +279,9 @@ function App() {
                                 setSelectedBed(bed);
                                 setSelectedSquare({ bed, position });
                               }}
-                              className={`aspect-square rounded border flex items-center justify-center p-0.5 transition-colors ${
-                                isPlanted
-                                  ? 'bg-green-50 border-green-400 hover:bg-green-100'
-                                  : 'bg-amber-50 border-amber-200 hover:bg-amber-100'
-                              }`}
+                              className={`aspect-square rounded border flex items-center justify-center p-0.5 transition-colors ${squareColor}`}
                             >
-                              {isPlanted && sfg ? (
+                              {isOccupied && sfg ? (
                                 <SeedDotGrid count={sfg} plantType={sq.plantedSeedType} />
                               ) : null}
                             </button>
@@ -443,18 +480,19 @@ function App() {
               <div className="grid grid-cols-4 gap-2 max-w-sm">
                 {BED_POSITIONS.map((position) => {
                   const sq = getSquare(selectedBed, position);
-                  const planted = sq?.status === 'planted';
+                  const isOccupied = sq && sq.status !== 'empty';
+                  const squareColor =
+                    sq?.status === 'harvesting' ? 'bg-amber-50 border-amber-400 hover:bg-amber-100' :
+                    sq?.status === 'growing'    ? 'bg-teal-50 border-teal-400 hover:bg-teal-100' :
+                    isOccupied                  ? 'bg-green-50 border-green-400 hover:bg-green-100' :
+                                                  'bg-stone-50 border-stone-200 hover:bg-stone-100';
                   return (
                     <button
                       key={position}
                       onClick={() => setSelectedSquare({ bed: selectedBed, position })}
-                      className={`aspect-square rounded-lg border-2 flex flex-col items-center justify-center p-1.5 transition-colors text-center ${
-                        planted
-                          ? 'bg-green-50 border-green-400 hover:bg-green-100'
-                          : 'bg-amber-50 border-amber-200 hover:bg-amber-100'
-                      }`}
+                      className={`aspect-square rounded-lg border-2 flex flex-col items-center justify-center p-1.5 transition-colors text-center ${squareColor}`}
                     >
-                      {planted ? (
+                      {isOccupied ? (
                         <>
                           {(() => {
                             const sfg = getSeedById(sq.plantedSeedId!)?.sfgPerSquare;
@@ -462,12 +500,15 @@ function App() {
                               <SeedDotGrid count={sfg} plantType={sq.plantedSeedType} />
                             ) : null;
                           })()}
-                          <span className="text-[10px] font-medium text-green-800 capitalize leading-tight mt-1 line-clamp-1">
+                          <span className={`text-[10px] font-medium capitalize leading-tight mt-1 line-clamp-1 ${
+                            sq.status === 'harvesting' ? 'text-amber-800' :
+                            sq.status === 'growing' ? 'text-teal-800' : 'text-green-800'
+                          }`}>
                             {sq.plantedSeedName}
                           </span>
                         </>
                       ) : (
-                        <span className="text-sm text-amber-600 font-medium">{position}</span>
+                        <span className="text-sm text-stone-400 font-medium">{position}</span>
                       )}
                     </button>
                   );
@@ -709,6 +750,7 @@ function App() {
             currentSeedId={sq?.plantedSeedId}
             currentSeedName={sq?.plantedSeedName}
             currentSeedType={sq?.plantedSeedType}
+            currentStatus={sq?.status}
             plantedDate={sq?.plantedDate}
             availableSeeds={availableSeeds}
             onDirectSow={async (seedId) => {
@@ -719,6 +761,10 @@ function App() {
                 'direct_sow',
                 new Date().toISOString().split('T')[0]
               );
+              setSelectedSquare(null);
+            }}
+            onAdvanceStage={async (newStatus) => {
+              await advanceStage(selectedSquare.bed, selectedSquare.position, newStatus);
               setSelectedSquare(null);
             }}
             onClear={async () => {

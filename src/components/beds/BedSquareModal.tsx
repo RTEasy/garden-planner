@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { InventoryItemWithSeed } from '../../hooks/useInventory';
 import { SeedDotGrid } from './SeedDotGrid';
 
+type SquareStatus = 'empty' | 'planted' | 'growing' | 'harvesting' | 'done';
+
 interface Props {
   isOpen: boolean;
   bed: 1 | 2 | 3;
@@ -10,9 +12,11 @@ interface Props {
   currentSeedId?: string;
   currentSeedName?: string;
   currentSeedType?: string;
+  currentStatus?: SquareStatus;
   plantedDate?: string;
   availableSeeds: InventoryItemWithSeed[];
   onDirectSow: (seedId: string) => void;
+  onAdvanceStage: (status: 'growing' | 'harvesting') => void;
   onClear: () => void;
   onClose: () => void;
 }
@@ -23,10 +27,22 @@ const TYPE_COLORS: Record<string, string> = {
   flower: 'bg-pink-100 text-pink-800',
 };
 
+const STAGE_LABELS: Record<string, string> = {
+  planted: 'Just planted',
+  growing: 'Growing',
+  harvesting: 'Ready to harvest',
+};
+
+const STAGE_BG: Record<string, string> = {
+  planted: 'bg-green-50 border-green-200',
+  growing: 'bg-teal-50 border-teal-200',
+  harvesting: 'bg-amber-50 border-amber-200',
+};
+
 export function BedSquareModal({
   isOpen, bed, position, bedName,
-  currentSeedId, currentSeedName, currentSeedType, plantedDate,
-  availableSeeds, onDirectSow, onClear, onClose,
+  currentSeedId, currentSeedName, currentSeedType, currentStatus, plantedDate,
+  availableSeeds, onDirectSow, onAdvanceStage, onClear, onClose,
 }: Props) {
   const [selectedSeedId, setSelectedSeedId] = useState('');
   const [search, setSearch] = useState('');
@@ -40,8 +56,9 @@ export function BedSquareModal({
   );
 
   const selectedItem = availableSeeds.find(i => i.seedId === selectedSeedId);
+  const status = currentStatus ?? 'planted';
 
-  // Square is already planted — show what's there
+  // Square is already planted — show what's there + stage controls
   if (currentSeedId) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -49,19 +66,46 @@ export function BedSquareModal({
           <div className="text-xs text-gray-400 mb-1">Box {bed} · Square {position}</div>
           <h2 className="text-lg font-semibold text-gray-800 mb-4">{bedName}</h2>
 
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-            <div className="font-medium text-gray-800 capitalize">{currentSeedName}</div>
-            <div className="flex items-center gap-2 mt-1">
+          <div className={`border rounded-lg p-4 mb-4 ${STAGE_BG[status] ?? STAGE_BG.planted}`}>
+            <div className="flex items-center justify-between mb-1">
+              <div className="font-medium text-gray-800 capitalize">{currentSeedName}</div>
+              <span className="text-xs font-medium text-gray-500 bg-white px-2 py-0.5 rounded-full border">
+                {STAGE_LABELS[status] ?? status}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
               {currentSeedType && (
                 <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${TYPE_COLORS[currentSeedType] || 'bg-gray-100 text-gray-600'}`}>
                   {currentSeedType}
                 </span>
               )}
               <span className="text-xs text-gray-500">
-                Direct sowed {plantedDate ? `on ${new Date(plantedDate).toLocaleDateString()}` : ''}
+                Planted {plantedDate ? `on ${new Date(plantedDate).toLocaleDateString()}` : ''}
               </span>
             </div>
           </div>
+
+          {/* Stage advancement */}
+          {!confirmingClear && (
+            <div className="mb-4 space-y-2">
+              {status === 'planted' && (
+                <button
+                  onClick={() => onAdvanceStage('growing')}
+                  className="w-full text-left px-4 py-2.5 bg-teal-50 border border-teal-300 rounded-lg text-sm text-teal-800 hover:bg-teal-100 transition-colors font-medium"
+                >
+                  It sprouted! → Mark as Growing
+                </button>
+              )}
+              {status === 'growing' && (
+                <button
+                  onClick={() => onAdvanceStage('harvesting')}
+                  className="w-full text-left px-4 py-2.5 bg-amber-50 border border-amber-300 rounded-lg text-sm text-amber-800 hover:bg-amber-100 transition-colors font-medium"
+                >
+                  Ready to harvest! → Mark as Harvesting
+                </button>
+              )}
+            </div>
+          )}
 
           {confirmingClear ? (
             <div>
@@ -89,7 +133,7 @@ export function BedSquareModal({
                 onClick={() => setConfirmingClear(true)}
                 className="flex-1 bg-red-50 text-red-600 py-2 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium border border-red-200"
               >
-                Remove Plant
+                {status === 'harvesting' ? 'All done — clear square' : 'Remove Plant'}
               </button>
               <button
                 onClick={onClose}

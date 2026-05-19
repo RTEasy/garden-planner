@@ -82,5 +82,23 @@ export function useBedSquares() {
   const getSquare = (bed: 1 | 2 | 3, position: string) =>
     bedSquares.find(sq => sq.bed === bed && sq.position === position);
 
-  return { bedSquares, loading, plantSquare, clearSquare, getSquare };
+  const advanceStage = async (
+    bed: 1 | 2 | 3,
+    position: string,
+    status: 'growing' | 'harvesting'
+  ): Promise<boolean> => {
+    if (!user) return false;
+    const sq = getSquare(bed, position);
+    if (!sq?.id) return false;
+    const { error } = await supabase
+      .from('bed_squares')
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq('id', sq.id)
+      .eq('user_id', user.id);
+    if (error) { console.error('Error advancing stage:', error); return false; }
+    await fetchBedSquares();
+    return true;
+  };
+
+  return { bedSquares, loading, plantSquare, clearSquare, getSquare, advanceStage };
 }
