@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { InventoryItemWithSeed } from '../../hooks/useInventory';
+import { SeedDotGrid } from './SeedDotGrid';
 
 interface Props {
   isOpen: boolean;
@@ -29,6 +30,7 @@ export function BedSquareModal({
 }: Props) {
   const [selectedSeedId, setSelectedSeedId] = useState('');
   const [search, setSearch] = useState('');
+  const [confirmingClear, setConfirmingClear] = useState(false);
 
   if (!isOpen) return null;
 
@@ -36,6 +38,8 @@ export function BedSquareModal({
     i.seed.commonName.toLowerCase().includes(search.toLowerCase()) ||
     i.seed.cultivar.toLowerCase().includes(search.toLowerCase())
   );
+
+  const selectedItem = availableSeeds.find(i => i.seedId === selectedSeedId);
 
   // Square is already planted — show what's there
   if (currentSeedId) {
@@ -59,20 +63,42 @@ export function BedSquareModal({
             </div>
           </div>
 
-          <div className="flex gap-3">
-            <button
-              onClick={onClear}
-              className="flex-1 bg-red-50 text-red-600 py-2 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium border border-red-200"
-            >
-              Remove Plant
-            </button>
-            <button
-              onClick={onClose}
-              className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition-colors text-sm"
-            >
-              Close
-            </button>
-          </div>
+          {confirmingClear ? (
+            <div>
+              <p className="text-sm text-gray-700 mb-3">
+                Remove <span className="font-medium capitalize">{currentSeedName}</span> from this square?
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={onClear}
+                  className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+                >
+                  Yes, remove
+                </button>
+                <button
+                  onClick={() => setConfirmingClear(false)}
+                  className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmingClear(true)}
+                className="flex-1 bg-red-50 text-red-600 py-2 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium border border-red-200"
+              >
+                Remove Plant
+              </button>
+              <button
+                onClick={onClose}
+                className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+              >
+                Close
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -94,7 +120,7 @@ export function BedSquareModal({
           autoFocus
         />
 
-        <div className="max-h-52 overflow-y-auto space-y-1 mb-5">
+        <div className="max-h-44 overflow-y-auto space-y-1 mb-3">
           {filtered.length === 0 ? (
             <p className="text-sm text-gray-400 text-center py-6">
               {availableSeeds.length === 0 ? 'Add seeds to your inventory first.' : 'No matches.'}
@@ -123,6 +149,17 @@ export function BedSquareModal({
             </button>
           ))}
         </div>
+
+        {/* SFG density preview */}
+        {selectedItem && selectedItem.seed.sfgPerSquare && (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 mb-4 flex items-center gap-4">
+            <SeedDotGrid count={selectedItem.seed.sfgPerSquare} plantType={selectedItem.seed.plantType} />
+            <div className="text-xs text-gray-600">
+              <div className="font-medium capitalize text-gray-800">{selectedItem.seed.commonName}</div>
+              <div>{selectedItem.seed.sfgPerSquare} plant{selectedItem.seed.sfgPerSquare > 1 ? 's' : ''} per square foot</div>
+            </div>
+          </div>
+        )}
 
         <div className="flex gap-3">
           <button

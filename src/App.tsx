@@ -138,10 +138,16 @@ function App() {
                                 item.seed.plantType === 'herb' ? 'bg-purple-400' :
                                 'bg-pink-400'
                               }`} />
-                              <div className="min-w-0">
+                              <div className="min-w-0 flex-1">
                                 <div className="text-xs font-medium text-gray-800 capitalize truncate">{item.seed.commonName}</div>
                                 <div className="text-[10px] text-gray-400 truncate">{item.seed.cultivar}</div>
                               </div>
+                              {item.status === 'planted' && (
+                                <span className="text-[9px] bg-green-100 text-green-700 px-1 py-0.5 rounded font-medium shrink-0">bed</span>
+                              )}
+                              {item.status === 'in_process' && (
+                                <span className="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.5 rounded font-medium shrink-0">indoor</span>
+                              )}
                             </div>
                           </li>
                         );
@@ -173,6 +179,16 @@ function App() {
                   Manage →
                 </button>
               </div>
+              {/* Color legend */}
+              <div className="flex gap-4 mb-4 text-xs text-gray-500">
+                {[['bg-green-500', 'Vegetable'], ['bg-purple-400', 'Herb'], ['bg-pink-400', 'Flower']].map(([color, label]) => (
+                  <div key={label} className="flex items-center gap-1.5">
+                    <div className={`w-2.5 h-2.5 rounded-full ${color}`} />
+                    {label}
+                  </div>
+                ))}
+              </div>
+
               <div className="grid grid-cols-3 gap-4">
                 {([1, 2, 3] as const).map(bed => {
                   const planted = BED_POSITIONS.filter(p => getSquare(bed, p)?.status === 'planted').length;
@@ -204,7 +220,16 @@ function App() {
                           );
                         })}
                       </div>
-                      <div className="text-xs text-gray-400">{planted}/16 planted</div>
+                      {/* Fill bar */}
+                      <div className="w-full">
+                        <div className="w-full bg-gray-100 rounded-full h-1.5 mb-1">
+                          <div
+                            className="bg-green-500 h-1.5 rounded-full transition-all"
+                            style={{ width: `${(planted / 16) * 100}%` }}
+                          />
+                        </div>
+                        <div className="text-xs text-gray-400 text-center">{planted}/16 planted</div>
+                      </div>
                     </div>
                   );
                 })}
