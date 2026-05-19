@@ -5,14 +5,17 @@ import { useAuth } from './context/AuthContext';
 import { AuthForm } from './components/auth/AuthForm';
 import { LocationSetup } from './components/location/LocationSetup';
 import { useGardenLocation } from './hooks/useGardenLocation';
-import { useInventory } from './hooks/useInventory';
+import { useInventory, InventoryItemWithSeed } from './hooks/useInventory';
 import { useSchedule } from './hooks/useSchedule';
 import { useInSeason } from './hooks/useInSeason';
+import { useBedSquares } from './hooks/useBedSquares';
 import { AddSeedModal } from './components/inventory/AddSeedModal';
 import { SeedPacketCard } from './components/inventory/SeedPacketCard';
 import { SeedLifecycleModal } from './components/inventory/SeedLifecycleModal';
+import { BedSquareModal } from './components/beds/BedSquareModal';
 import { ProcessType } from './types';
-import { InventoryItemWithSeed } from './hooks/useInventory';
+import { parseAlmanacDateRange, formatDateRange } from './utils/dateCalculations';
+import { differenceInDays } from 'date-fns';
 import { formatDateRange } from './utils/dateCalculations';
 import './App.css';
 
@@ -23,6 +26,7 @@ function App() {
   const [selectedBed, setSelectedBed] = useState<1 | 2 | 3>(1);
   const [showAddSeedModal, setShowAddSeedModal] = useState(false);
   const [hoveredSeed, setHoveredSeed] = useState<string | null>(null);
+  const [selectedSquare, setSelectedSquare] = useState<{ bed: 1|2|3; position: string } | null>(null);
   const { user, loading, signOut } = useAuth();
   const { location } = useGardenLocation();
   const { inventory, loading: inventoryLoading, addToInventory, advanceStatus, removeFromInventory, removeAllFromInventory, importAllSeeds } = useInventory();
@@ -37,6 +41,9 @@ function App() {
   };
   const { activeTasks, upcomingTasks, futureTasks, loading: scheduleLoading, hasLocation, hasInventory } = useSchedule();
   const { activeSeeds, upcomingSeeds } = useInSeason();
+  const { getSquare, plantSquare, clearSquare } = useBedSquares();
+
+  const indoorStarts = inventory.filter(i => i.status === 'in_process' && i.processType === 'starting_indoors');
 
   const bedNames = {
     1: 'Vegetables & Herbs',
@@ -230,6 +237,66 @@ function App() {
                 </button>
               </div>
             )}
+
+            {/* Indoor Starts */}
+            {indoorStarts.length > 0 && (
+              <div className="bg-white rounded-lg shadow p-6">
+                <h2 className="text-xl font-semibold text-gray-800 mb-4">Indoor Starts</h2>
+                <div className="space-y-3">
+                  {indoorStarts.map(item => {
+                    const seed = getSeedById(item.seedId);
+                    const transplantRange = seed?.almanacTransplant
+                      ? parseAlmanacDateRange(seed.almanacTransplant)
+                      : null;
+                    const today = new Date();
+                    const daysUntil = transplantRange
+                      ? differenceInDays(transplantRange.start, today)
+                      : null;
+                    const isReady = transplantRange
+                      ? today >= transplantRange.start && today <= transplantRange.end
+                      : false;
+                    const isPast = transplantRange ? today > transplantRange.end : false;
+
+                    return (
+                      <div key={item.id} className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex justify-between items-start flex-wrap gap-2">
+                          <div>
+                            <span className="font-medium text-gray-800 capitalize">{item.seed.commonName}</span>
+                            <span className="text-gray-500 text-sm ml-2">{item.seed.cultivar}</span>
+                          </div>
+                          {isReady && (
+                            <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">
+                              Ready to transplant
+                            </span>
+                          )}
+                          {isPast && (
+                            <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-medium">
+                              Move to a bed when ready
+                            </span>
+                          )}
+                          {daysUntil !== null && daysUntil > 0 && (
+                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">
+                              {daysUntil}d until transplant window
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-2 flex gap-4 text-xs text-gray-500">
+                          {item.actionDate && (
+                            <span>Started {new Date(item.actionDate).toLocaleDateString()}</span>
+                          )}
+                          {transplantRange && (
+                            <span>Transplant window: {formatDateRange(transplantRange)}</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-gray-400 mt-3">
+                  Go to the Beds tab to assign a square when ready to transplant.
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -258,17 +325,35 @@ function App() {
               <p className="text-gray-500 text-sm mb-4">4' x 4' raised bed (16 square feet)</p>
 
               {/* Bed Grid */}
-              <div className="grid grid-cols-4 gap-2 max-w-md">
-                {BED_POSITIONS.map((position) => (
-                  <button
-                    key={position}
-                    className="aspect-square bg-amber-100 hover:bg-amber-200 border-2 border-amber-300 rounded-lg flex items-center justify-center text-amber-800 font-medium transition-colors"
-                  >
-                    {position}
-                  </button>
-                ))}
+              <div className="grid grid-cols-4 gap-2 max-w-sm">
+                {BED_POSITIONS.map((position) => {
+                  const sq = getSquare(selectedBed, position);
+                  const planted = sq?.status === 'planted';
+                  return (
+                    <button
+                      key={position}
+                      onClick={() => setSelectedSquare({ bed: selectedBed, position })}
+                      className={`aspect-square rounded-lg border-2 flex flex-col items-center justify-center p-1 transition-colors text-center ${
+                        planted
+                          ? 'bg-green-100 border-green-400 hover:bg-green-200'
+                          : 'bg-amber-50 border-amber-200 hover:bg-amber-100'
+                      }`}
+                    >
+                      {planted ? (
+                        <>
+                          <span className="text-xs font-medium text-green-800 capitalize leading-tight line-clamp-2">
+                            {sq.plantedSeedName}
+                          </span>
+                          <span className="text-xs text-gray-400 mt-0.5">{position}</span>
+                        </>
+                      ) : (
+                        <span className="text-sm text-amber-600 font-medium">{position}</span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
-              <p className="text-gray-400 text-xs mt-4">Click a square to view or assign plants</p>
+              <p className="text-gray-400 text-xs mt-3">Click a square to plant or view</p>
             </div>
           </div>
         )}
@@ -322,162 +407,70 @@ function App() {
                 </div>
               </div>
             ) : (
-              <div className="space-y-6">
-                {/* In My Inventory */}
-                {(() => {
-                  const items = inventory.filter(i => i.status === 'in_inventory');
-                  return (
-                    <div className="bg-white rounded-lg shadow overflow-hidden">
-                      <div className="px-4 py-3 border-b bg-gray-50 flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full bg-blue-400 inline-block"></span>
-                        <h3 className="font-semibold text-gray-700">In My Inventory</h3>
-                        <span className="ml-auto text-sm text-gray-400">{items.length} {items.length === 1 ? 'variety' : 'varieties'}</span>
-                      </div>
-                      {items.length === 0 ? (
-                        <p className="px-4 py-4 text-sm text-gray-400">No seeds waiting to be started.</p>
-                      ) : (
-                        <table className="w-full">
-                          <thead className="bg-gray-50 border-b">
-                            <tr>
-                              <th className="text-left px-4 py-2 text-gray-500 font-medium text-sm">Name</th>
-                              <th className="text-left px-4 py-2 text-gray-500 font-medium text-sm">Cultivar</th>
-                              <th className="text-left px-4 py-2 text-gray-500 font-medium text-sm hidden sm:table-cell">Type</th>
-                              <th className="text-left px-4 py-2 text-gray-500 font-medium text-sm">Packets</th>
-                              <th className="text-left px-4 py-2 text-gray-500 font-medium text-sm">Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-gray-100">
-                            {items.map(item => (
-                              <tr key={item.id} className="hover:bg-gray-50">
-                                <td className="px-4 py-3 font-medium text-gray-800 capitalize">{item.seed.commonName}</td>
-                                <td className="px-4 py-3 text-gray-600 text-sm">{item.seed.cultivar}</td>
-                                <td className="px-4 py-3 hidden sm:table-cell">
-                                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                                    item.seed.plantType === 'vegetable' ? 'bg-green-100 text-green-700' :
-                                    item.seed.plantType === 'herb' ? 'bg-purple-100 text-purple-700' :
-                                    'bg-pink-100 text-pink-700'
-                                  }`}>{item.seed.plantType}</span>
-                                </td>
-                                <td className="px-4 py-3 text-gray-600 text-sm">{item.packetCount}</td>
-                                <td className="px-4 py-3">
-                                  <div className="flex items-center gap-3">
-                                    <button
-                                      onClick={() => openLifecycleModal(item)}
-                                      className="text-sm text-green-700 font-medium hover:text-green-800"
-                                    >
-                                      Start Growing
-                                    </button>
-                                    <button
-                                      onClick={() => removeFromInventory(item.id)}
-                                      className="text-sm text-red-500 hover:text-red-600"
-                                    >
-                                      Remove
-                                    </button>
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      )}
-                    </div>
-                  );
-                })()}
-
-                {/* In Process */}
-                {(() => {
-                  const items = inventory.filter(i => i.status === 'in_process');
-                  return (
-                    <div className="bg-white rounded-lg shadow overflow-hidden">
-                      <div className="px-4 py-3 border-b bg-gray-50 flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span>
-                        <h3 className="font-semibold text-gray-700">In Process</h3>
-                        <span className="ml-auto text-sm text-gray-400">{items.length} {items.length === 1 ? 'variety' : 'varieties'}</span>
-                      </div>
-                      {items.length === 0 ? (
-                        <p className="px-4 py-4 text-sm text-gray-400">Nothing started yet. Use "Start Growing" on a seed above.</p>
-                      ) : (
-                        <table className="w-full">
-                          <thead className="bg-gray-50 border-b">
-                            <tr>
-                              <th className="text-left px-4 py-2 text-gray-500 font-medium text-sm">Name</th>
-                              <th className="text-left px-4 py-2 text-gray-500 font-medium text-sm">Cultivar</th>
-                              <th className="text-left px-4 py-2 text-gray-500 font-medium text-sm">Method</th>
-                              <th className="text-left px-4 py-2 text-gray-500 font-medium text-sm hidden sm:table-cell">Started</th>
-                              <th className="text-left px-4 py-2 text-gray-500 font-medium text-sm">Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-gray-100">
-                            {items.map(item => (
-                              <tr key={item.id} className="hover:bg-gray-50">
-                                <td className="px-4 py-3 font-medium text-gray-800 capitalize">{item.seed.commonName}</td>
-                                <td className="px-4 py-3 text-gray-600 text-sm">{item.seed.cultivar}</td>
-                                <td className="px-4 py-3">
-                                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                                    item.processType === 'starting_indoors'
-                                      ? 'bg-blue-100 text-blue-700'
-                                      : 'bg-amber-100 text-amber-700'
-                                  }`}>
-                                    {item.processType === 'starting_indoors' ? 'Starting Indoors' : 'Direct Sow'}
-                                  </span>
-                                </td>
-                                <td className="px-4 py-3 text-gray-500 text-sm hidden sm:table-cell">
-                                  {item.actionDate ? new Date(item.actionDate).toLocaleDateString() : '—'}
-                                </td>
-                                <td className="px-4 py-3">
-                                  <button
-                                    onClick={() => advanceStatus(item.id, 'planted', undefined, new Date().toISOString().split('T')[0])}
-                                    className="text-sm text-green-700 font-medium hover:text-green-800"
-                                  >
-                                    Mark Planted
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      )}
-                    </div>
-                  );
-                })()}
-
-                {/* Planted */}
-                {(() => {
-                  const items = inventory.filter(i => i.status === 'planted');
-                  return (
-                    <div className="bg-white rounded-lg shadow overflow-hidden">
-                      <div className="px-4 py-3 border-b bg-gray-50 flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full bg-green-500 inline-block"></span>
-                        <h3 className="font-semibold text-gray-700">Planted</h3>
-                        <span className="ml-auto text-sm text-gray-400">{items.length} {items.length === 1 ? 'variety' : 'varieties'}</span>
-                      </div>
-                      {items.length === 0 ? (
-                        <p className="px-4 py-4 text-sm text-gray-400">Nothing planted yet.</p>
-                      ) : (
-                        <table className="w-full">
-                          <thead className="bg-gray-50 border-b">
-                            <tr>
-                              <th className="text-left px-4 py-2 text-gray-500 font-medium text-sm">Name</th>
-                              <th className="text-left px-4 py-2 text-gray-500 font-medium text-sm">Cultivar</th>
-                              <th className="text-left px-4 py-2 text-gray-500 font-medium text-sm hidden sm:table-cell">Date Planted</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-gray-100">
-                            {items.map(item => (
-                              <tr key={item.id} className="hover:bg-gray-50">
-                                <td className="px-4 py-3 font-medium text-gray-800 capitalize">{item.seed.commonName}</td>
-                                <td className="px-4 py-3 text-gray-600 text-sm">{item.seed.cultivar}</td>
-                                <td className="px-4 py-3 text-gray-500 text-sm hidden sm:table-cell">
-                                  {item.actionDate ? new Date(item.actionDate).toLocaleDateString() : '—'}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      )}
-                    </div>
-                  );
-                })()}
+              <div className="bg-white rounded-lg shadow overflow-hidden overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="text-left px-4 py-3 text-gray-500 font-medium text-sm">Name</th>
+                      <th className="text-left px-4 py-3 text-gray-500 font-medium text-sm">Cultivar</th>
+                      <th className="text-left px-4 py-3 text-gray-500 font-medium text-sm hidden sm:table-cell">Type</th>
+                      <th className="text-left px-4 py-3 text-gray-500 font-medium text-sm">Status</th>
+                      <th className="text-left px-4 py-3 text-gray-500 font-medium text-sm">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {inventory.map(item => (
+                      <tr key={item.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 font-medium text-gray-800 capitalize">{item.seed.commonName}</td>
+                        <td className="px-4 py-3 text-gray-600 text-sm">{item.seed.cultivar}</td>
+                        <td className="px-4 py-3 hidden sm:table-cell">
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                            item.seed.plantType === 'vegetable' ? 'bg-green-100 text-green-700' :
+                            item.seed.plantType === 'herb' ? 'bg-purple-100 text-purple-700' :
+                            'bg-pink-100 text-pink-700'
+                          }`}>{item.seed.plantType}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          {item.status === 'in_inventory' && (
+                            <span className="text-xs text-gray-500">In inventory</span>
+                          )}
+                          {item.status === 'in_process' && item.processType === 'starting_indoors' && (
+                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">Starting indoors</span>
+                          )}
+                          {item.status === 'in_process' && item.processType === 'direct_sow' && (
+                            <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">Direct sowed</span>
+                          )}
+                          {item.status === 'planted' && (
+                            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">Planted</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            {item.status === 'in_inventory' && (
+                              <button
+                                onClick={() => openLifecycleModal(item)}
+                                className="text-sm text-green-700 font-medium hover:text-green-800"
+                              >
+                                Start Indoors
+                              </button>
+                            )}
+                            {item.status === 'in_inventory' && (
+                              <button
+                                onClick={() => removeFromInventory(item.id)}
+                                className="text-sm text-red-500 hover:text-red-600"
+                              >
+                                Remove
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <div className="px-4 py-3 bg-gray-50 text-gray-400 text-sm">
+                  {inventory.length} {inventory.length === 1 ? 'variety' : 'varieties'} · To direct sow, go to the Beds tab and click a square.
+                </div>
               </div>
             )}
 
@@ -714,9 +707,44 @@ function App() {
         isOpen={!!lifecycleTarget}
         seedName={lifecycleTarget?.seed.commonName || ''}
         cultivar={lifecycleTarget?.seed.cultivar || ''}
+        defaultProcessType="starting_indoors"
         onConfirm={handleLifecycleConfirm}
         onClose={() => setLifecycleTarget(null)}
       />
+
+      {/* Bed Square Modal */}
+      {selectedSquare && (() => {
+        const sq = getSquare(selectedSquare.bed, selectedSquare.position);
+        const availableSeeds = inventory.filter(i => i.status === 'in_inventory');
+        return (
+          <BedSquareModal
+            isOpen={true}
+            bed={selectedSquare.bed}
+            position={selectedSquare.position}
+            bedName={bedNames[selectedSquare.bed]}
+            currentSeedId={sq?.plantedSeedId}
+            currentSeedName={sq?.plantedSeedName}
+            currentSeedType={sq?.plantedSeedType}
+            plantedDate={sq?.plantedDate}
+            availableSeeds={availableSeeds}
+            onDirectSow={async (seedId) => {
+              await plantSquare(selectedSquare.bed, selectedSquare.position, seedId);
+              await advanceStatus(
+                inventory.find(i => i.seedId === seedId && i.status === 'in_inventory')?.id || '',
+                'planted',
+                'direct_sow',
+                new Date().toISOString().split('T')[0]
+              );
+              setSelectedSquare(null);
+            }}
+            onClear={async () => {
+              await clearSquare(selectedSquare.bed, selectedSquare.position);
+              setSelectedSquare(null);
+            }}
+            onClose={() => setSelectedSquare(null)}
+          />
+        );
+      })()}
     </div>
   );
 }
