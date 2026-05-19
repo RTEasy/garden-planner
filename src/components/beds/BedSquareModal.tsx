@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { InventoryItemWithSeed } from '../../hooks/useInventory';
 import { SeedDotGrid } from './SeedDotGrid';
+import { getCompanionRule } from '../../data/companionPlanting';
 
 type SquareStatus = 'empty' | 'planted' | 'growing' | 'harvesting' | 'done';
 
@@ -15,6 +16,7 @@ interface Props {
   currentStatus?: SquareStatus;
   plantedDate?: string;
   availableSeeds: InventoryItemWithSeed[];
+  neighborSeeds: Array<{ position: string; seedId: string; seedName: string }>;
   onDirectSow: (seedId: string) => void;
   onAdvanceStage: (status: 'growing' | 'harvesting') => void;
   onClear: () => void;
@@ -42,7 +44,7 @@ const STAGE_BG: Record<string, string> = {
 export function BedSquareModal({
   isOpen, bed, position, bedName,
   currentSeedId, currentSeedName, currentSeedType, currentStatus, plantedDate,
-  availableSeeds, onDirectSow, onAdvanceStage, onClear, onClose,
+  availableSeeds, neighborSeeds, onDirectSow, onAdvanceStage, onClear, onClose,
 }: Props) {
   const [selectedSeedId, setSelectedSeedId] = useState('');
   const [search, setSearch] = useState('');
@@ -57,6 +59,12 @@ export function BedSquareModal({
 
   const selectedItem = availableSeeds.find(i => i.seedId === selectedSeedId);
   const status = currentStatus ?? 'planted';
+
+  const companionHints = selectedSeedId
+    ? neighborSeeds
+        .map(n => ({ ...n, rule: getCompanionRule(selectedSeedId, n.seedId) }))
+        .filter(n => n.rule !== null)
+    : [];
 
   // Square is already planted — show what's there + stage controls
   if (currentSeedId) {
@@ -202,6 +210,27 @@ export function BedSquareModal({
               <div className="font-medium capitalize text-gray-800">{selectedItem.seed.commonName}</div>
               <div>{selectedItem.seed.sfgPerSquare} plant{selectedItem.seed.sfgPerSquare > 1 ? 's' : ''} per square foot</div>
             </div>
+          </div>
+        )}
+
+        {/* Companion planting hints */}
+        {companionHints.length > 0 && (
+          <div className="space-y-1.5 mb-4">
+            {companionHints.map((hint, i) => (
+              <div
+                key={i}
+                className={`flex items-start gap-2 px-3 py-2 rounded-lg text-xs border ${
+                  hint.rule!.type === 'good'
+                    ? 'bg-green-50 border-green-200 text-green-800'
+                    : 'bg-red-50 border-red-200 text-red-800'
+                }`}
+              >
+                <span className="shrink-0 font-bold">{hint.rule!.type === 'good' ? '✓' : '⚠'}</span>
+                <span>
+                  <span className="font-medium capitalize">{hint.seedName}</span> is nearby — {hint.rule!.reason}
+                </span>
+              </div>
+            ))}
           </div>
         )}
 

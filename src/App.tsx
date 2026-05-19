@@ -16,6 +16,7 @@ import { SeedDotGrid } from './components/beds/SeedDotGrid';
 import { ScheduleTimeline } from './components/schedule/ScheduleTimeline';
 import { ProcessType } from './types';
 import { parseAlmanacDateRange, formatDateRange } from './utils/dateCalculations';
+import { getAdjacentPositions } from './data/companionPlanting';
 import { differenceInDays } from 'date-fns';
 import './App.css';
 
@@ -741,6 +742,10 @@ function App() {
       {selectedSquare && (() => {
         const sq = getSquare(selectedSquare.bed, selectedSquare.position);
         const availableSeeds = inventory.filter(i => i.status === 'in_inventory');
+        const neighborSeeds = getAdjacentPositions(selectedSquare.position)
+          .map(pos => getSquare(selectedSquare.bed, pos))
+          .filter((s): s is NonNullable<typeof s> => !!s?.plantedSeedId)
+          .map(s => ({ position: s.position, seedId: s.plantedSeedId!, seedName: s.plantedSeedName || '' }));
         return (
           <BedSquareModal
             isOpen={true}
@@ -753,6 +758,7 @@ function App() {
             currentStatus={sq?.status}
             plantedDate={sq?.plantedDate}
             availableSeeds={availableSeeds}
+            neighborSeeds={neighborSeeds}
             onDirectSow={async (seedId) => {
               await plantSquare(selectedSquare.bed, selectedSquare.position, seedId);
               await advanceStatus(
