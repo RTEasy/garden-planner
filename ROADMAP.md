@@ -422,6 +422,40 @@ garden-planner/
 
 ---
 
+## UI/UX Backlog
+
+### U1 — Seed Lifecycle & Inventory Redesign
+
+**Goal**: The seed catalog is the user's personal inventory. Seeds flow through distinct states
+from purchase through planting.
+
+**State machine**:
+```
+[in inventory] → [in process] → [planted]
+     ↑                ↑
+  (bought)      user picks:
+                - starting indoors
+                - direct sowing
+```
+
+**Details**:
+- **In inventory**: Seeds owned but not yet in use. User adds a seed packet here after buying it from
+  a store. Quantity (packets or approximate count) tracked here.
+- **In process**: User has taken action — either started seeds indoors in trays/pots, or direct sowed
+  into a bed square. User specifies which. Date of action recorded.
+- **Planted**: Seeds are established outdoors in a bed square. Links to a specific bed + position.
+
+**UX implications**:
+- "Add to inventory" flow = logging a purchase
+- "Move to in process" = triggered from the Schedule tab ("I did this") or from inventory directly
+- "Move to planted" = links to a bed square in the grid visualizer
+- Inventory tab should be renamed or restructured to reflect this as the seed lifecycle hub,
+  not just a flat list of packets
+- The seed catalog reference (browsable list of all 27 varieties) stays separate from personal
+  inventory/lifecycle tracking
+
+---
+
 ## Next Steps
 
 1. ~~Initialize Vite + React + TypeScript project~~ DONE
