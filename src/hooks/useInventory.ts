@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { seedCatalog } from '../data/seedCatalog';
+import { SeedStatus, ProcessType } from '../types';
 
 export interface InventoryItem {
   id: string;
@@ -10,6 +11,9 @@ export interface InventoryItem {
   packetCount: number;
   dateAdded: string;
   notes?: string;
+  status: SeedStatus;
+  processType?: ProcessType;
+  actionDate?: string;
 }
 
 export interface InventoryItemWithSeed extends InventoryItem {
@@ -48,6 +52,9 @@ export function useInventory() {
           packet_count,
           date_added,
           notes,
+          status,
+          process_type,
+          action_date,
           seed_catalog (
             common_name,
             genus_species,
@@ -68,6 +75,9 @@ export function useInventory() {
         packetCount: item.packet_count || 0,
         dateAdded: item.date_added,
         notes: item.notes,
+        status: (item.status || 'in_inventory') as SeedStatus,
+        processType: item.process_type as ProcessType | undefined,
+        actionDate: item.action_date || undefined,
         seed: {
           commonName: item.seed_catalog?.common_name || '',
           genusSpecies: item.seed_catalog?.genus_species || '',
@@ -211,6 +221,41 @@ export function useInventory() {
     }
   };
 
+  const advanceStatus = async (
+    id: string,
+    status: SeedStatus,
+    processType?: ProcessType,
+    actionDate?: string
+  ): Promise<boolean> => {
+    if (!user) return false;
+
+    try {
+      setError(null);
+
+      const updateData: Record<string, unknown> = {
+        status,
+        updated_at: new Date().toISOString(),
+      };
+      if (processType !== undefined) updateData.process_type = processType;
+      if (actionDate !== undefined) updateData.action_date = actionDate;
+
+      const { error: updateError } = await supabase
+        .from('inventory')
+        .update(updateData)
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (updateError) throw updateError;
+
+      await fetchInventory();
+      return true;
+    } catch (err) {
+      console.error('Error advancing status:', err);
+      setError(err instanceof Error ? err.message : 'Failed to update status');
+      return false;
+    }
+  };
+
   const removeAllFromInventory = async (): Promise<boolean> => {
     if (!user) return false;
 
@@ -239,6 +284,7 @@ export function useInventory() {
     error,
     addToInventory,
     updateInventoryItem,
+    advanceStatus,
     removeFromInventory,
     removeAllFromInventory,
     importAllSeeds,

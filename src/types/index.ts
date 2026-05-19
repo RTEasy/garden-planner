@@ -2,6 +2,8 @@ export type PlantType = 'flower' | 'herb' | 'vegetable';
 export type Lifecycle = 'annual' | 'biennial' | 'perennial';
 export type PlantingAction = 'start indoors' | 'direct sow' | 'transplant' | 'succession sow';
 export type SquareStatus = 'empty' | 'planted' | 'growing' | 'harvesting' | 'done';
+export type SeedStatus = 'in_inventory' | 'in_process' | 'planted';
+export type ProcessType = 'starting_indoors' | 'direct_sow';
 
 export interface Seed {
   id: string;

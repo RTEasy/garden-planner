@@ -32,15 +32,20 @@ export function useSchedule() {
     const generatedTasks: PlantingTask[] = [];
 
     for (const item of inventory) {
+      // Planted or direct-sowed seeds need no further schedule tasks
+      if (item.status === 'planted') continue;
+      if (item.status === 'in_process' && item.processType === 'direct_sow') continue;
+
+      const isStartingIndoors = item.status === 'in_process' && item.processType === 'starting_indoors';
       const seed = getSeedById(item.seedId);
       if (!seed) continue;
 
-      // Start Seeds Indoors task
+      // Start Seeds Indoors task (skip if already started indoors)
       // Prefer Almanac dates, fall back to relative timing
       const indoorRange = parseAlmanacDateRange(seed.almanacIndoors) ||
         parseTimingString(seed.insideStartTime, lastFrost, firstFrost);
 
-      if (indoorRange) {
+      if (indoorRange && !isStartingIndoors) {
         generatedTasks.push({
           id: `${item.seedId}-indoor`,
           seedId: item.seedId,
