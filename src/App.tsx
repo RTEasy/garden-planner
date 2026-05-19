@@ -6,7 +6,6 @@ import { AuthForm } from './components/auth/AuthForm';
 import { LocationSetup } from './components/location/LocationSetup';
 import { useGardenLocation } from './hooks/useGardenLocation';
 import { useInventory, InventoryItemWithSeed } from './hooks/useInventory';
-import { useSchedule } from './hooks/useSchedule';
 import { useInSeason } from './hooks/useInSeason';
 import { useBedSquares } from './hooks/useBedSquares';
 import { AddSeedModal } from './components/inventory/AddSeedModal';
@@ -40,7 +39,6 @@ function App() {
     await advanceStatus(lifecycleTarget.id, 'in_process', processType, actionDate);
     setLifecycleTarget(null);
   };
-  const { activeTasks, upcomingTasks, futureTasks, loading: scheduleLoading, hasLocation, hasInventory } = useSchedule();
   const { activeSeeds, upcomingSeeds } = useInSeason();
   const { getSquare, plantSquare, clearSquare } = useBedSquares();
 
