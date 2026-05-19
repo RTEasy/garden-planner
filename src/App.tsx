@@ -110,7 +110,58 @@ function App() {
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 py-6">
         {activeTab === 'dashboard' && (
-          <div className="space-y-6">
+          <div className="flex gap-6 items-start">
+
+            {/* Left sidebar — inventory seeds */}
+            <div className="w-48 shrink-0 hidden lg:block">
+              <div className="bg-white rounded-lg shadow sticky top-20">
+                <div className="px-3 py-3 border-b border-gray-100">
+                  <h3 className="text-sm font-semibold text-gray-700">My Seeds</h3>
+                  <p className="text-xs text-gray-400 mt-0.5">{inventory.length} varieties</p>
+                </div>
+                <div className="overflow-y-auto max-h-[calc(100vh-10rem)]">
+                  {inventory.length === 0 ? (
+                    <p className="text-xs text-gray-400 p-3">No seeds yet.</p>
+                  ) : (
+                    <ul className="divide-y divide-gray-50">
+                      {inventory.map(item => {
+                        const seed = getSeedById(item.seedId);
+                        return (
+                          <li
+                            key={item.id}
+                            className="px-3 py-2 hover:bg-amber-50 cursor-default transition-colors"
+                            onMouseEnter={() => seed && setHoveredSeed(seed.id)}
+                            onMouseLeave={() => setHoveredSeed(null)}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className={`w-2 h-2 rounded-full shrink-0 ${
+                                item.seed.plantType === 'vegetable' ? 'bg-green-500' :
+                                item.seed.plantType === 'herb' ? 'bg-purple-400' :
+                                'bg-pink-400'
+                              }`} />
+                              <div className="min-w-0">
+                                <div className="text-xs font-medium text-gray-800 capitalize truncate">{item.seed.commonName}</div>
+                                <div className="text-[10px] text-gray-400 truncate">{item.seed.cultivar}</div>
+                              </div>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Hover card */}
+            {hoveredSeed && getSeedById(hoveredSeed) && (
+              <div className="fixed top-24 right-4 z-50 hidden lg:block">
+                <SeedPacketCard seed={getSeedById(hoveredSeed)!} />
+              </div>
+            )}
+
+            {/* Right — main dashboard content */}
+            <div className="flex-1 min-w-0 space-y-6">
 
             {/* Beds Overview */}
             <div className="bg-white rounded-lg shadow p-6">
@@ -305,6 +356,7 @@ function App() {
                 </p>
               </div>
             )}
+            </div>
           </div>
         )}
 
