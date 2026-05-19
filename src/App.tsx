@@ -16,7 +16,6 @@ import { BedSquareModal } from './components/beds/BedSquareModal';
 import { ProcessType } from './types';
 import { parseAlmanacDateRange, formatDateRange } from './utils/dateCalculations';
 import { differenceInDays } from 'date-fns';
-import { formatDateRange } from './utils/dateCalculations';
 import './App.css';
 
 type Tab = 'dashboard' | 'beds' | 'inventory' | 'schedule' | 'settings';
