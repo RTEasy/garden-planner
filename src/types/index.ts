@@ -26,6 +26,7 @@ export interface Seed {
   almanacDirectSow?: string;    // e.g., "Feb 24-Mar 11"
   almanacLastPlanting?: string; // e.g., "Apr 8"
   almanacHarvest?: string;      // e.g., "Jul 1-Oct 31"
+  almanacBloom?: string;        // e.g., "May 1-Oct 31"
   growHeight: string;
   growWidth: string;
   germinationInstructions: string;

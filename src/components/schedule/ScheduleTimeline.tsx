@@ -28,6 +28,7 @@ const LEGEND = [
   { color: 'bg-violet-400', label: 'Transplant' },
   { color: 'bg-green-500', label: 'Sow Outside' },
   { color: 'bg-amber-400', label: 'Harvest' },
+  { color: 'bg-pink-400', label: 'Bloom' },
 ];
 
 function getBars(item: InventoryItemWithSeed): Bar[] {
@@ -61,6 +62,11 @@ function getBars(item: InventoryItemWithSeed): Bar[] {
   if (seed.almanacHarvest) {
     const r = parseAlmanacDateRange(seed.almanacHarvest);
     if (r) bars.push({ label: 'Harvest', color: 'bg-amber-400', startPct: toPct(r.start), endPct: toPct(r.end) });
+  }
+
+  if (seed.almanacBloom) {
+    const r = parseAlmanacDateRange(seed.almanacBloom);
+    if (r) bars.push({ label: 'Bloom', color: 'bg-pink-400', startPct: toPct(r.start), endPct: toPct(r.end) });
   }
 
   return bars;
